@@ -62,9 +62,21 @@ async def get_current_user(
     )
 
 
+SUPERUSER_ROLES = {"program_manager", "afcen_admin"}
+ROLE_ALIASES = {
+    "admin": {"program_manager", "afcen_admin"},
+    "analyst": {"program_manager", "afcen_admin"},
+}
+
+
 def require_role(*allowed_roles: str):
     async def checker(auth: AuthContext = Depends(get_current_user)):
-        if auth.role not in allowed_roles:
+        if auth.role in SUPERUSER_ROLES:
+            return auth
+        expanded = set(allowed_roles)
+        for role in allowed_roles:
+            expanded |= ROLE_ALIASES.get(role, set())
+        if auth.role not in expanded:
             raise HTTPException(status_code=403, detail=f"Role '{auth.role}' not permitted")
         return auth
     return checker
