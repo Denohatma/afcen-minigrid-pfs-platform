@@ -1,0 +1,48 @@
+## 5. Solar Resource Assessment
+
+{% if solar %}
+### 5.1 Data Source
+
+Solar irradiance data sourced from the **PVGIS v5.3** satellite database ({{ solar.data_source }}) for coordinates {{ site.lat }}°N, {{ site.lon }}°E. Monthly values represent long-term averages across available years.
+
+### 5.2 Monthly Irradiance
+
+| Month | GHI (kWh/m²) | DNI (kWh/m²) | Avg. Temp (°C) |
+|---|---|---|---|
+{% set months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] %}
+{% for i in range(12) %}
+| {{ months[i] }} | {{ solar.monthly_ghi_kwh_m2[i] | num(1) }} | {{ solar.monthly_dni_kwh_m2[i] | num(1) }} | {{ solar.monthly_temp_c[i] | num(1) }} |
+{% endfor %}
+| **Annual Total** | **{{ solar.annual_ghi_kwh_m2 | num(1) }}** | **{{ solar.monthly_dni_kwh_m2 | sum | num(1) }}** | **{{ (solar.monthly_temp_c | sum / 12) | num(1) }}** |
+
+### 5.3 Specific Yield and Performance Ratio
+
+| Parameter | Value |
+|---|---|
+| Annual GHI | {{ solar.annual_ghi_kwh_m2 | num(1) }} kWh/m²/yr |
+| Specific yield | {{ solar.specific_yield_kwh_per_kwp | num(0) }} kWh/kWp/yr |
+| Performance ratio | {{ (solar.performance_ratio * 100) | num(1) }}% |
+
+### 5.4 Loss Breakdown
+
+| Loss Category | Loss (%) |
+|---|---|
+{% for loss_name, loss_pct in solar.loss_breakdown.items() %}
+| {{ loss_name | replace("_", " ") | title }} | {{ (loss_pct * 100) | num(1) }}% |
+{% endfor %}
+| **Combined performance ratio** | **{{ (solar.performance_ratio * 100) | num(1) }}%** |
+
+### 5.5 Assessment
+
+The site receives excellent solar irradiance with an annual GHI of {{ solar.annual_ghi_kwh_m2 | num(1) }} kWh/m², which is {% if solar.annual_ghi_kwh_m2 > 1800 %}well above{% elif solar.annual_ghi_kwh_m2 > 1500 %}above{% else %}within{% endif %} the typical range for economically viable solar mini-grids in Sub-Saharan Africa (1,500–2,200 kWh/m²/yr). Seasonal variation between the sunniest and dullest months is approximately {{ ((solar.monthly_ghi_kwh_m2 | max) / (solar.monthly_ghi_kwh_m2 | min) * 100 - 100) | num(0) }}%, which {% if ((solar.monthly_ghi_kwh_m2 | max) / (solar.monthly_ghi_kwh_m2 | min)) < 1.5 %}is moderate and manageable{% else %}is notable and influences battery sizing{% endif %}.
+
+{% if solar.warnings %}
+### Solar Resource Notes
+{% for w in solar.warnings %}
+- {{ w }}
+{% endfor %}
+{% endif %}
+
+{% else %}
+[DATA GAP: Solar resource adapter did not produce output. {{ errors.get("solar_resource", "Unknown error") }}. Action required: Check PVGIS API connectivity and site coordinates.]
+{% endif %}

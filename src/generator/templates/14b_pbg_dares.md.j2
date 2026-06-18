@@ -1,0 +1,40 @@
+## 14b. DARES PBG Grant Analysis
+
+{% if pbg %}
+### Performance-Based Grant Summary
+
+| Metric | Value |
+|---|---|
+| Total Grant | {{ pbg.grant_total_usd | usd }} |
+| Grant as % of CAPEX | {{ pbg.grant_pct_of_capex }}% |
+| Grant per Connection | {{ pbg.grant_per_connection_usd | usd }} |
+| Grant per kWp | {{ pbg.grant_per_kwp_usd | usd }} |
+| IFC Revolver Eligible | {{ pbg.ifc_revolver_eligible_usd | usd }} |
+| **DARES Compliant** | **{{ "Yes" if pbg.dares_compliant else "No" }}** |
+
+### Milestone Disbursement Schedule
+
+| Milestone | Trigger | % of Grant | Amount | Max Months |
+|:-:|---|:-:|---|:-:|
+{% for m in pbg.milestones %}
+| {{ m.milestone }} | {{ m.trigger | replace("_", " ") | title }} | {{ (m.pct_of_grant * 100) | num(0) }}% | {{ m.amount_usd | usd }} | {{ m.max_months }} |
+{% endfor %}
+
+{% if pbg.compliance_notes %}
+### Compliance Notes
+
+{% for note in pbg.compliance_notes %}
+- {{ note }}
+{% endfor %}
+{% endif %}
+
+{% if pbg.warnings %}
+### Warnings
+{% for w in pbg.warnings %}
+- {{ w }}
+{% endfor %}
+{% endif %}
+
+{% else %}
+[DATA GAP: PBG calculator did not produce output.]
+{% endif %}

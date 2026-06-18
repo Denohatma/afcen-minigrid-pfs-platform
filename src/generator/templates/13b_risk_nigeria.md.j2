@@ -1,0 +1,39 @@
+## 13b. Risk Analysis — Nigeria
+
+{% if risk %}
+### Risk Summary
+
+| Metric | Value |
+|---|---|
+| Overall Risk Score | **{{ risk.overall_risk_score | num(1) }}/5** |
+| Risk Rating | **{{ risk.risk_rating | title }}** |
+
+### Top Risks
+
+{% for r in risk.top_risks %}
+{{ loop.index }}. {{ r }}
+{% endfor %}
+
+### Detailed Risk Register
+
+| Category | Risk | Likelihood | Impact | Score | Mitigation | Owner |
+|---|---|---|---|:-:|---|---|
+{% for r in risk.risk_items %}
+| {{ r.category | title }} | {{ r.description }} | {{ r.likelihood | title }} | {{ r.impact | title }} | {{ r.score | num(1) }} | {{ r.mitigation }} | {{ r.owner | title }} |
+{% endfor %}
+
+{% if risk.currency_risk_note %}
+### Currency Risk — NGN/USD
+
+{{ risk.currency_risk_note }}
+{% endif %}
+
+{% if risk.security_risk_note %}
+### Security Risk
+
+{{ risk.security_risk_note }}
+{% endif %}
+
+{% else %}
+[DATA GAP: Risk analysis engine did not produce output.]
+{% endif %}

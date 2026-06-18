@@ -1,0 +1,60 @@
+## 8. Distribution Network Design
+
+{% if distribution %}
+### 8.1 Design Methodology
+
+Distribution network design uses the **{{ distribution.method_used | replace("_", " ") }}** method{% if distribution.method_used == "osm_network" %}, leveraging OpenStreetMap road network data to route conductors along existing paths{% elif distribution.method_used == "radial_estimate" %}, a parametric estimation based on customer count and terrain multiplier{% endif %}.
+
+### 8.2 Network Summary
+
+| Parameter | Value |
+|---|---|
+| Total line length | {{ distribution.total_line_length_m | num }} m ({{ (distribution.total_line_length_m / 1000) | num(2) }} km) |
+| Pole count | {{ distribution.pole_count }} |
+| Average span | {{ distribution.avg_span_m }} m |
+| Customers connected | {{ distribution.customers_connected }} |
+| Construction multiplier | {{ distribution.construction_multiplier }}x ({{ site.terrain | title }} terrain) |
+| Voltage drop (max) | {{ distribution.voltage_drop_max_pct }}% |
+| Technical losses | {{ distribution.technical_losses_pct }}% |
+
+### 8.3 Conductor Sizing
+
+| Conductor | Class | Length (m) | Length (km) |
+|---|---|---|---|
+{% for cond, length in distribution.line_lengths_by_class.items() %}
+| {{ cond }} | {% if "35" in cond %}Spine{% elif "16" in cond %}Feeder{% else %}Service{% endif %} | {{ length | num }} | {{ (length / 1000) | num(2) }} |
+{% endfor %}
+| **Total** | | **{{ distribution.total_line_length_m | num }}** | **{{ (distribution.total_line_length_m / 1000) | num(2) }}** |
+
+### 8.4 Bill of Quantities
+
+| Category | Description | Unit | Qty | Unit Cost (USD) | Total (USD) |
+|---|---|---|---|---|---|
+{% for item in distribution.bill_of_quantities %}
+| {{ item.category | title }} | {{ item.description }} | {{ item.unit }} | {{ item.quantity | num(2) }} | {{ item.unit_cost_usd | usd }} | {{ item.total_cost_usd | usd }} |
+{% endfor %}
+| | | | | **Total** | **{{ distribution.total_network_cost_usd | usd }}** |
+
+### 8.5 Cost Summary
+
+| Metric | Value |
+|---|---|
+| Total network cost | **{{ distribution.total_network_cost_usd | usd }}** |
+| Cost per connection | **{{ distribution.cost_per_connection_usd | usd }}** |
+{% if financial %}| Share of total CAPEX | {{ (distribution.total_network_cost_usd / financial.total_capex_usd * 100) | num(1) }}% |{% endif %}
+
+### 8.6 Network Quality
+
+- **Voltage drop:** {{ distribution.voltage_drop_max_pct }}% (limit: 10% per national standards)
+- **Technical losses:** {{ distribution.technical_losses_pct }}% {% if distribution.technical_losses_pct <= 8 %}(acceptable){% elif distribution.technical_losses_pct <= 12 %}(moderate — review feeder lengths){% else %}(high — consider network reconfiguration){% endif %}
+
+{% if distribution.warnings %}
+### Distribution Design Notes
+{% for w in distribution.warnings %}
+- {{ w }}
+{% endfor %}
+{% endif %}
+
+{% else %}
+[DATA GAP: Distribution routing adapter did not produce output. {{ errors.get("distribution_routing", "Unknown error") }}. Action required: Verify demand assessment completed successfully.]
+{% endif %}

@@ -1,0 +1,59 @@
+## 11. Carbon Assessment
+
+{% if carbon %}
+### 11.1 Emission Reductions
+
+The mini-grid displaces fossil-fuel self-generation (diesel and petrol/PMS generators) that would otherwise serve the community's electricity needs. Nigeria has an estimated 22 million petrol generators; emission reductions are calculated based on displaced diesel and PMS consumption using IPCC Tier 2 emission factors.
+
+| Parameter | Value |
+|---|---|
+| Annual emission reductions | **{{ carbon.annual_emission_reductions_tco2e }} tCO₂e/year** |
+| Diesel displaced | {{ carbon.diesel_displaced_litres_yr | num }} litres/year |
+| PMS (petrol) displaced | {{ carbon.pms_displaced_litres_yr | num }} litres/year |
+| Crediting period | {{ carbon.crediting_period_years }} years |
+| Total eligible reductions | {{ carbon.total_eligible_tco2e | num }} tCO₂e |
+| Issuance start | Year {{ carbon.issuance_start_year }} |
+
+### 11.2 Carbon Revenue Scenarios
+
+| Scenario | Price ($/tCO₂e) | Annual Revenue | NPV ({{ carbon.crediting_period_years }}-year) |
+|---|---|---|---|
+{% for name, revenue in carbon.revenue_by_scenario.items() %}
+| {{ name | title }} | ${{ {"zero": 0, "conservative": 5, "market": 12, "premium": 20}.get(name, 0) }} | {{ revenue | usd }} | {{ carbon.npv_carbon_revenue.get(name, 0) | usd }} |
+{% endfor %}
+
+### 11.3 Methodology Recommendation
+
+| Parameter | Value |
+|---|---|
+| Recommended methodology | **{{ carbon.recommended_methodology }}** |
+| Alternative methodology | {{ carbon.alternative_methodology }} |
+| Validation cost estimate | {{ carbon.validation_cost_estimate_usd | usd }} |
+| Annual verification cost | {{ carbon.annual_verification_cost_usd | usd }} |
+
+**Rationale:** {{ carbon.methodology_rationale }}
+
+### 11.4 Cost-Benefit Assessment
+
+{% set market_rev = carbon.revenue_by_scenario.get("market", 0) %}
+{% set annual_cost = carbon.annual_verification_cost_usd %}
+{% set net_benefit = market_rev - annual_cost %}
+- Annual carbon revenue (market scenario): {{ market_rev | usd }}
+- Annual verification cost: {{ annual_cost | usd }}
+- Net annual benefit: {{ net_benefit | usd }}
+- Validation cost payback: {% if market_rev > 0 %}{{ (carbon.validation_cost_estimate_usd / market_rev) | num(1) }} years{% else %}N/A — no revenue at zero price{% endif %}
+
+{% if net_benefit < 0 %}
+**Note:** At the market price scenario, annual verification costs exceed carbon revenue. Consider bundling carbon credits with other mini-grid projects to achieve economies of scale.
+{% endif %}
+
+{% if carbon.warnings %}
+### Carbon Assessment Notes
+{% for w in carbon.warnings %}
+- {{ w }}
+{% endfor %}
+{% endif %}
+
+{% else %}
+[DATA GAP: Carbon assessment adapter did not produce output. {{ errors.get("carbon_assessment", "Unknown error") }}. Action required: Ensure hybrid sizing adapter produced valid output.]
+{% endif %}

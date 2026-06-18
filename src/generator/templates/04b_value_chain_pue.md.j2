@@ -1,0 +1,466 @@
+## 4B. Productive Use of Energy & Value Chain Analysis
+
+### 4B.1 Introduction
+
+Productive Use of Energy (PUE) refers to activities that generate income, increase productivity, enhance diversity, and create economic value through the consumption of electricity. PUE activities are critical to mini-grid sustainability because:
+
+1. **Revenue enhancement** — PUE increases average electricity consumption and revenues, improving long-term viability
+2. **Livelihood improvement** — New businesses and jobs diversify the local economy and increase willingness and ability to pay for electricity
+3. **Load optimisation** — Certain PUE activities shift peak loads towards daytime when solar generation is highest, reducing battery costs
+
+This section identifies value chains in the {{ site.site_name }} area that can be mechanised and electrified to unlock economic value.
+
+### 4B.2 Local Economic Context
+
+{% if site.economic_activities %}
+The following economic activities are reported at {{ site.site_name }}:
+{% for activity in site.economic_activities %}
+- {{ activity }}
+{% endfor %}
+{% else %}
+Economic activity data was not provided for this site. The analysis below uses sector benchmarks for communities of {{ site.population | num }} people in {{ site.country }}.
+{% endif %}
+
+### 4B.3 Value Chain Identification
+
+The table below maps local value chains to electrification and mechanisation opportunities. Each value chain is assessed for its potential to generate productive demand for the mini-grid.
+
+{% set pue_database = {
+    "grain_mill": {
+        "category": "Primary Industry",
+        "value_chain": "Grain Processing (Maize, Millet, Sorghum, Cassava)",
+        "current_practice": "Manual pounding or transport to distant diesel mills",
+        "electrified_solution": "Electric hammer/posho mill (11–15 kW)",
+        "power_kw": 11.5,
+        "daily_kwh": 23.0,
+        "capital_usd": 2000,
+        "monthly_revenue_usd": 360,
+        "monthly_expenses_usd": 220,
+        "payback_months": 14,
+        "jobs_created": "2–3 direct, 5+ indirect",
+        "gender_impact": "High — reduces women's time spent on manual processing",
+        "viability": "High"
+    },
+    "rice_processing": {
+        "category": "Primary Industry",
+        "value_chain": "Rice Processing",
+        "current_practice": "Manual dehusking or transport to urban processing centres",
+        "electrified_solution": "Electric rice huller/polisher (3–7 kW)",
+        "power_kw": 5.0,
+        "daily_kwh": 15.0,
+        "capital_usd": 1500,
+        "monthly_revenue_usd": 280,
+        "monthly_expenses_usd": 180,
+        "payback_months": 15,
+        "jobs_created": "1–2 direct, 3+ indirect",
+        "gender_impact": "High — women are primary rice processors",
+        "viability": "High"
+    },
+    "fish_chilling": {
+        "category": "Primary Industry",
+        "value_chain": "Fish Cold Chain",
+        "current_practice": "Sun-drying or salting; 30–40% post-harvest losses",
+        "electrified_solution": "Electric chest freezers (0.3–0.5 kW each) or cold room",
+        "power_kw": 0.36,
+        "daily_kwh": 1.08,
+        "capital_usd": 730,
+        "monthly_revenue_usd": 81,
+        "monthly_expenses_usd": 49,
+        "payback_months": 23,
+        "jobs_created": "1–2 direct per unit",
+        "gender_impact": "High — women-led fish trading is common",
+        "viability": "High"
+    },
+    "cold_storage": {
+        "category": "Primary Industry",
+        "value_chain": "Agricultural Cold Storage",
+        "current_practice": "No cold storage; crops sold immediately at low prices",
+        "electrified_solution": "Solar-powered cold room (2–5 kW compressor)",
+        "power_kw": 3.0,
+        "daily_kwh": 18.0,
+        "capital_usd": 8000,
+        "monthly_revenue_usd": 450,
+        "monthly_expenses_usd": 280,
+        "payback_months": 47,
+        "jobs_created": "2–3 direct",
+        "gender_impact": "Medium — extends shelf life for women's market produce",
+        "viability": "Medium"
+    },
+    "irrigation_pump": {
+        "category": "Primary Industry",
+        "value_chain": "Irrigated Agriculture",
+        "current_practice": "Rain-fed agriculture only; single harvest season",
+        "electrified_solution": "Solar electric pump (1–5 kW) for drip/sprinkler irrigation",
+        "power_kw": 3.0,
+        "daily_kwh": 12.0,
+        "capital_usd": 3000,
+        "monthly_revenue_usd": 500,
+        "monthly_expenses_usd": 150,
+        "payback_months": 9,
+        "jobs_created": "3–5 direct",
+        "gender_impact": "Medium — enables year-round vegetable gardening",
+        "viability": "High"
+    },
+    "cotton_processing": {
+        "category": "Primary Industry",
+        "value_chain": "Cotton/Textile Processing",
+        "current_practice": "Raw cotton sold to middlemen at low prices",
+        "electrified_solution": "Electric cotton gin (5–10 kW)",
+        "power_kw": 7.5,
+        "daily_kwh": 30.0,
+        "capital_usd": 5000,
+        "monthly_revenue_usd": 600,
+        "monthly_expenses_usd": 350,
+        "payback_months": 20,
+        "jobs_created": "3–5 direct",
+        "gender_impact": "Medium",
+        "viability": "Medium"
+    },
+    "oil_press": {
+        "category": "Primary Industry",
+        "value_chain": "Oil Extraction (Sesame, Sunflower, Groundnut)",
+        "current_practice": "Manual pressing or no local processing",
+        "electrified_solution": "Electric oil press (3–7 kW)",
+        "power_kw": 5.0,
+        "daily_kwh": 20.0,
+        "capital_usd": 2500,
+        "monthly_revenue_usd": 400,
+        "monthly_expenses_usd": 220,
+        "payback_months": 14,
+        "jobs_created": "2–3 direct",
+        "gender_impact": "High — women dominate oil processing",
+        "viability": "High"
+    },
+    "welding": {
+        "category": "Light Manufacturing",
+        "value_chain": "Metal Fabrication & Welding",
+        "current_practice": "Limited to hand tools; customers travel to towns for welding services",
+        "electrified_solution": "Arc welder (5–8 kW), angle grinder, drill press",
+        "power_kw": 6.0,
+        "daily_kwh": 12.0,
+        "capital_usd": 1500,
+        "monthly_revenue_usd": 300,
+        "monthly_expenses_usd": 150,
+        "payback_months": 10,
+        "jobs_created": "1–2 direct",
+        "gender_impact": "Low — predominantly male occupation",
+        "viability": "High"
+    },
+    "carpentry": {
+        "category": "Light Manufacturing",
+        "value_chain": "Carpentry & Woodworking",
+        "current_practice": "Hand tools only; limited production capacity",
+        "electrified_solution": "Electric planer (2.4 kW), circular saw (1.5 kW), router (1.6 kW)",
+        "power_kw": 2.4,
+        "daily_kwh": 8.0,
+        "capital_usd": 1200,
+        "monthly_revenue_usd": 250,
+        "monthly_expenses_usd": 130,
+        "payback_months": 10,
+        "jobs_created": "1–2 direct",
+        "gender_impact": "Low — predominantly male occupation",
+        "viability": "High"
+    },
+    "tailoring": {
+        "category": "Light Manufacturing",
+        "value_chain": "Tailoring & Textile Production",
+        "current_practice": "Manual sewing machines or no local service",
+        "electrified_solution": "Electric sewing machine (0.1 kW), electric iron (1 kW)",
+        "power_kw": 1.0,
+        "daily_kwh": 2.0,
+        "capital_usd": 300,
+        "monthly_revenue_usd": 120,
+        "monthly_expenses_usd": 60,
+        "payback_months": 5,
+        "jobs_created": "1 direct",
+        "gender_impact": "High — predominantly female entrepreneurs",
+        "viability": "High"
+    },
+    "bakery": {
+        "category": "Light Manufacturing",
+        "value_chain": "Bakery & Food Processing",
+        "current_practice": "Charcoal/wood-fired ovens or no local bakery",
+        "electrified_solution": "Electric oven (2–3 kW), mixer (0.5 kW)",
+        "power_kw": 3.0,
+        "daily_kwh": 9.0,
+        "capital_usd": 1500,
+        "monthly_revenue_usd": 350,
+        "monthly_expenses_usd": 200,
+        "payback_months": 10,
+        "jobs_created": "2–3 direct",
+        "gender_impact": "High — women-led baking enterprises",
+        "viability": "Medium"
+    },
+    "ice_making": {
+        "category": "Light Manufacturing",
+        "value_chain": "Ice Production",
+        "current_practice": "Ice imported from distant towns at high cost",
+        "electrified_solution": "Commercial ice maker (2–5 kW)",
+        "power_kw": 3.5,
+        "daily_kwh": 21.0,
+        "capital_usd": 5000,
+        "monthly_revenue_usd": 400,
+        "monthly_expenses_usd": 250,
+        "payback_months": 33,
+        "jobs_created": "1–2 direct",
+        "gender_impact": "Medium",
+        "viability": "Medium"
+    },
+    "retail_shop": {
+        "category": "Commercial & Retail",
+        "value_chain": "Retail & General Commerce",
+        "current_practice": "Limited trading hours; no refrigeration for perishables",
+        "electrified_solution": "Lighting, phone charging station, refrigerator",
+        "power_kw": 0.5,
+        "daily_kwh": 3.0,
+        "capital_usd": 500,
+        "monthly_revenue_usd": 100,
+        "monthly_expenses_usd": 40,
+        "payback_months": 8,
+        "jobs_created": "1 direct",
+        "gender_impact": "High — women dominate retail trade",
+        "viability": "High"
+    },
+    "barber_salon": {
+        "category": "Commercial & Retail",
+        "value_chain": "Personal Services (Barbers, Salons)",
+        "current_practice": "Manual clippers; limited services",
+        "electrified_solution": "Electric clippers (0.05 kW), hair dryer (1.5 kW)",
+        "power_kw": 1.5,
+        "daily_kwh": 3.0,
+        "capital_usd": 200,
+        "monthly_revenue_usd": 150,
+        "monthly_expenses_usd": 50,
+        "payback_months": 2,
+        "jobs_created": "1 direct",
+        "gender_impact": "High — salons often women-operated",
+        "viability": "High"
+    },
+    "phone_charging": {
+        "category": "Commercial & Retail",
+        "value_chain": "Phone Charging & Connectivity",
+        "current_practice": "Travel to town for charging; solar home systems",
+        "electrified_solution": "Multi-port charging station (0.1–0.5 kW)",
+        "power_kw": 0.3,
+        "daily_kwh": 1.5,
+        "capital_usd": 200,
+        "monthly_revenue_usd": 80,
+        "monthly_expenses_usd": 20,
+        "payback_months": 3,
+        "jobs_created": "1 direct",
+        "gender_impact": "Medium",
+        "viability": "High"
+    },
+    "video_hall": {
+        "category": "Commercial & Retail",
+        "value_chain": "Entertainment (Video Halls)",
+        "current_practice": "Generator-powered in some locations",
+        "electrified_solution": "TV/projector (0.2 kW), sound system (0.1 kW)",
+        "power_kw": 0.3,
+        "daily_kwh": 2.0,
+        "capital_usd": 400,
+        "monthly_revenue_usd": 120,
+        "monthly_expenses_usd": 40,
+        "payback_months": 5,
+        "jobs_created": "1 direct",
+        "gender_impact": "Low",
+        "viability": "High"
+    },
+    "water_pump": {
+        "category": "Community Services",
+        "value_chain": "Water Supply & Purification",
+        "current_practice": "Manual water collection from wells or surface sources",
+        "electrified_solution": "Electric borehole pump (1–3 kW), UV purification (0.05 kW)",
+        "power_kw": 2.0,
+        "daily_kwh": 6.0,
+        "capital_usd": 4000,
+        "monthly_revenue_usd": 200,
+        "monthly_expenses_usd": 80,
+        "payback_months": 33,
+        "jobs_created": "1 direct",
+        "gender_impact": "Very high — women and girls spend hours collecting water",
+        "viability": "High"
+    },
+    "health_centre": {
+        "category": "Community Services",
+        "value_chain": "Healthcare",
+        "current_practice": "Limited night services; no vaccine refrigeration",
+        "electrified_solution": "Medical refrigerator, lighting, communications, sterilisation",
+        "power_kw": 1.5,
+        "daily_kwh": 8.0,
+        "capital_usd": 3000,
+        "monthly_revenue_usd": 0,
+        "monthly_expenses_usd": 100,
+        "payback_months": 0,
+        "jobs_created": "0 (service improvement)",
+        "gender_impact": "Very high — maternal health services enabled",
+        "viability": "High (social return)"
+    },
+    "school": {
+        "category": "Community Services",
+        "value_chain": "Education",
+        "current_practice": "No evening study; no digital learning tools",
+        "electrified_solution": "Lighting, computers, projectors, printers",
+        "power_kw": 2.0,
+        "daily_kwh": 6.0,
+        "capital_usd": 2000,
+        "monthly_revenue_usd": 0,
+        "monthly_expenses_usd": 50,
+        "payback_months": 0,
+        "jobs_created": "0 (service improvement)",
+        "gender_impact": "High — evening study benefits girls' education",
+        "viability": "High (social return)"
+    }
+} %}
+
+{% set identified_pues = [] %}
+{% for a in site.anchors %}
+{% if a.load_type in pue_database %}
+{% set _ = identified_pues.append(a.load_type) %}
+{% endif %}
+{% endfor %}
+
+{% set economic_pues = [] %}
+{% if site.economic_activities %}
+{% for activity in site.economic_activities %}
+{% set act_lower = activity | lower %}
+{% if "fish" in act_lower and "fish_chilling" not in identified_pues %}{% set _ = economic_pues.append("fish_chilling") %}{% endif %}
+{% if "grain" in act_lower or "maize" in act_lower or "mill" in act_lower %}{% if "grain_mill" not in identified_pues %}{% set _ = economic_pues.append("grain_mill") %}{% endif %}{% endif %}
+{% if "rice" in act_lower %}{% if "rice_processing" not in identified_pues %}{% set _ = economic_pues.append("rice_processing") %}{% endif %}{% endif %}
+{% if "cotton" in act_lower or "textile" in act_lower %}{% if "cotton_processing" not in identified_pues %}{% set _ = economic_pues.append("cotton_processing") %}{% endif %}{% endif %}
+{% if "oil" in act_lower or "sesame" in act_lower or "groundnut" in act_lower or "sunflower" in act_lower %}{% if "oil_press" not in identified_pues %}{% set _ = economic_pues.append("oil_press") %}{% endif %}{% endif %}
+{% if "irrigat" in act_lower or "farm" in act_lower or "agriculture" in act_lower %}{% if "irrigation_pump" not in identified_pues %}{% set _ = economic_pues.append("irrigation_pump") %}{% endif %}{% endif %}
+{% if "weld" in act_lower or "metal" in act_lower %}{% if "welding" not in identified_pues %}{% set _ = economic_pues.append("welding") %}{% endif %}{% endif %}
+{% if "carpent" in act_lower or "wood" in act_lower %}{% if "carpentry" not in identified_pues %}{% set _ = economic_pues.append("carpentry") %}{% endif %}{% endif %}
+{% if "tailor" in act_lower or "sew" in act_lower %}{% if "tailoring" not in identified_pues %}{% set _ = economic_pues.append("tailoring") %}{% endif %}{% endif %}
+{% endfor %}
+{% endif %}
+
+{% set all_pue_keys = identified_pues + economic_pues %}
+{% if all_pue_keys | length == 0 %}
+{% set all_pue_keys = ["grain_mill", "tailoring", "barber_salon", "phone_charging", "retail_shop"] %}
+{% endif %}
+
+#### Identified Value Chain Opportunities
+
+| # | Value Chain | Category | Electrified Solution | Power (kW) | Daily Energy (kWh) | Viability |
+|---|---|---|---|---|---|---|
+{% set counter = [0] %}
+{% for key in all_pue_keys %}
+{% if key in pue_database %}
+{% set p = pue_database[key] %}
+{% set _ = counter.append(counter[-1] + 1) %}
+| {{ counter[-1] }} | {{ p.value_chain }} | {{ p.category }} | {{ p.electrified_solution }} | {{ p.power_kw }} | {{ p.daily_kwh }} | {{ p.viability }} |
+{% endif %}
+{% endfor %}
+
+### 4B.4 Business Case Analysis
+
+The following table presents indicative business cases for the highest-priority PUE activities, based on comparable mini-grid deployments across Sub-Saharan Africa:
+
+| PUE Activity | Capital Cost | Monthly Revenue | Monthly Expenses | Monthly Profit | Payback | Jobs Created |
+|---|---|---|---|---|---|---|
+{% for key in all_pue_keys %}
+{% if key in pue_database %}
+{% set p = pue_database[key] %}
+{% if p.monthly_revenue_usd > 0 %}
+| {{ p.value_chain }} | {{ p.capital_usd | usd }} | {{ p.monthly_revenue_usd | usd }} | {{ p.monthly_expenses_usd | usd }} | {{ (p.monthly_revenue_usd - p.monthly_expenses_usd) | usd }} | {{ p.payback_months }} months | {{ p.jobs_created }} |
+{% endif %}
+{% endif %}
+{% endfor %}
+
+### 4B.5 Demand Impact of PUE Activities
+
+If the identified PUE opportunities are realised, the additional productive demand would significantly improve mini-grid load factor and financial viability:
+
+{% set total_pue_daily_kwh = 0 %}
+{% set total_pue_power_kw = 0 %}
+{% for key in all_pue_keys %}
+{% if key in pue_database %}
+{% set total_pue_daily_kwh = total_pue_daily_kwh + pue_database[key].daily_kwh %}
+{% set total_pue_power_kw = total_pue_power_kw + pue_database[key].power_kw %}
+{% endif %}
+{% endfor %}
+
+| Metric | Value |
+|---|---|
+| Additional PUE daily demand | {{ total_pue_daily_kwh | num(1) }} kWh/day |
+| Additional PUE annual demand | {{ (total_pue_daily_kwh * 365) | num }} kWh/year |
+| Additional PUE peak load | {{ total_pue_power_kw | num(1) }} kW |
+{% if demand %}| PUE as % of total demand | {{ (total_pue_daily_kwh * 365 / demand.annual_demand_kwh * 100) | num(1) }}% |{% endif %}
+{% if demand %}| Enhanced load factor | {{ ((demand.annual_demand_kwh + total_pue_daily_kwh * 365) / ((demand.peak_load_kw + total_pue_power_kw) * 8760) * 100) | num(1) }}% |{% endif %}
+
+### 4B.6 Gender & Social Impact
+
+PUE activities have differentiated gender impacts. Electrification can particularly benefit women and girls by:
+
+| PUE Activity | Gender Impact | Rationale |
+|---|---|---|
+{% for key in all_pue_keys %}
+{% if key in pue_database %}
+{% set p = pue_database[key] %}
+| {{ p.value_chain }} | {{ p.gender_impact }} | {{ p.current_practice }} |
+{% endif %}
+{% endfor %}
+
+### 4B.7 PUE Pre-conditions Assessment
+
+For PUE activities to succeed, five pre-conditions must be met. The table below assesses the status at {{ site.site_name }}:
+
+| Pre-condition | Assessment | Notes |
+|---|---|---|
+| **Existence of value chain** | {% if site.economic_activities %}Established — {{ site.economic_activities | length }} activities identified{% else %}To be verified during feasibility{% endif %} | Local production and processing must be present |
+| **Access to finance** | To be verified | Mobile money, SACCOs, and micro-credit availability determines PUE equipment acquisition |
+| **Availability of appliances** | To be verified | Suppliers for PUE equipment must be accessible in nearest town |
+| **Knowledge and skills** | To be verified | Training programmes for equipment operation and business management |
+| **Business viability** | {% if site.population >= 1000 %}Favourable — {{ site.population | num }} population{% elif site.population >= 500 %}Moderate — {{ site.population | num }} population{% else %}Challenging — small catchment area{% endif %} | Minimum viable population ~500 for most primary industry PUEs |
+
+### 4B.8 PUE Recommendations
+
+#### Priority 1 — High-Impact PUE (implement at commissioning)
+
+{% for key in all_pue_keys %}
+{% if key in pue_database and pue_database[key].viability == "High" and pue_database[key].monthly_revenue_usd > 0 %}
+{% set p = pue_database[key] %}
+- **{{ p.value_chain }}**: {{ p.electrified_solution }}. Capital investment of {{ p.capital_usd | usd }} with {{ p.payback_months }}-month payback. Shifts {{ p.daily_kwh }} kWh/day of demand to {{ "daytime" if key in ["grain_mill", "rice_processing", "oil_press", "irrigation_pump", "welding", "carpentry"] else "all-day" }} hours.
+{% endif %}
+{% endfor %}
+
+#### Priority 2 — Medium-Term PUE (implement within Year 1–2)
+
+{% for key in all_pue_keys %}
+{% if key in pue_database and pue_database[key].viability == "Medium" and pue_database[key].monthly_revenue_usd > 0 %}
+{% set p = pue_database[key] %}
+- **{{ p.value_chain }}**: {{ p.electrified_solution }}. Capital investment of {{ p.capital_usd | usd }} with {{ p.payback_months }}-month payback.
+{% endif %}
+{% endfor %}
+
+#### Community Services (non-revenue, high social return)
+
+{% for key in all_pue_keys %}
+{% if key in pue_database and pue_database[key].monthly_revenue_usd == 0 %}
+{% set p = pue_database[key] %}
+- **{{ p.value_chain }}**: {{ p.electrified_solution }}. Capital investment of {{ p.capital_usd | usd }}. {{ p.gender_impact }} gender impact.
+{% endif %}
+{% endfor %}
+
+### 4B.9 PUE Financing Strategies
+
+PUE equipment requires financing mechanisms tailored to rural entrepreneurs:
+
+1. **Grant-funded activities** — Community assets (health centres, schools, water systems) should be funded through grant components of the mini-grid project
+2. **Loan-financed activities** — Commercial PUE equipment (mills, freezers, welders) can be financed through:
+   - Pay-As-You-Go (PAYG) models for smaller appliances
+   - Micro-finance institution (MFI) loans for larger equipment
+   - Equipment leasing arrangements with mini-grid operators
+   - Cost-sharing grants (50-70% grant, remainder as loan)
+3. **Developer-led PUE** — Mini-grid operators may directly invest in high-value PUE (e.g., grain mills, cold rooms) and operate them as a revenue-diversification strategy
+
+### 4B.10 PUE Integration with Mini-Grid Design
+
+The PUE analysis has the following implications for system design:
+
+- **Generation capacity**: PUE loads of {{ total_pue_power_kw | num(1) }} kW should be factored into system sizing for growth scenarios
+- **Daytime loading**: Primary industry PUEs (milling, processing, irrigation) operate during solar generation hours, improving self-consumption and reducing battery cycling
+- **Tariff structure**: Consider a productive-use tariff category that incentivises daytime consumption while maintaining affordability
+- **Demand management**: Load limiters or smart meters can prioritise household loads during evening peak while allowing PUE loads during daytime surplus periods

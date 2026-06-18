@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+*.db
+
+# Node
+node_modules/
+.next/
+out/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Build
+dist/
+build/
+*.tgz
+
+# Generated data & outputs
+output/
+document_storage/
+/sites/
+*.docx
+
+# Reference materials (large binaries)
+PFS references/
+afcen-design/
+References/
+Source files/
+.vercel

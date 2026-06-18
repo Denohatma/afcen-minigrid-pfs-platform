@@ -1,0 +1,59 @@
+## 13. Risk Register
+
+### 13.1 Adapter-Identified Risks
+
+The following risks and warnings were flagged by computational adapters during analysis:
+
+{% if all_warnings %}
+| # | Source | Risk / Warning |
+|---|---|---|
+{% for w in all_warnings %}
+| {{ loop.index }} | {{ w.source | replace("_", " ") | title }} | {{ w.warning }} |
+{% endfor %}
+{% else %}
+No adapter warnings were generated. All adapters executed within normal parameters.
+{% endif %}
+
+{% if errors %}
+### 13.2 Adapter Failures
+
+The following adapters did not complete successfully. Their sections contain gap markers.
+
+| Adapter | Error |
+|---|---|
+{% for name, error in errors.items() %}
+| {{ name | replace("_", " ") | title }} | {{ error }} |
+{% endfor %}
+{% endif %}
+
+### 13.3 Standard Risk Categories
+
+| Risk | Likelihood | Impact | Mitigation |
+|---|---|---|---|
+| **Demand below forecast** | Medium | High | Conservative base case uses diversity factors. Monitor uptake quarterly. Prepare demand stimulation programme. |
+| **Tariff affordability** | Medium | High | Willingness-to-pay survey required. Consider lifeline tariff for basic consumption. |
+| **Solar resource variability** | Low | Medium | PVGIS satellite data averaged over 18+ years. Ground measurements recommended for detailed design. |
+| **Equipment supply chain** | Medium | Medium | Procure from established Tier-1 suppliers. Allow 3-month lead time. |
+| **Battery degradation** | Low | High | LFP chemistry selected for longevity. Replacement CAPEX provisioned at Year 10. |
+| **Regulatory change** | Low | High | Monitor regulatory developments. Design for grid compatibility from day one. |
+{% if grid_arrival and grid_arrival.evidence_summary.get("assessment") in ["imminent", "likely"] %}
+| **Grid arrival (stranded asset)** | {{ "High" if grid_arrival.evidence_summary.get("assessment") == "imminent" else "Medium" }} | High | {{ grid_arrival.design_implications[:100] }}... |
+{% else %}
+| **Grid arrival** | Low | Medium | Design inverter for grid-forming capability. Annual monitoring of utility plans. |
+{% endif %}
+| **Construction delays** | Medium | Medium | Engage experienced EPC contractor. Include liquidated damages in contract. |
+| **Community opposition** | Low | Medium | Early stakeholder engagement. Transparent tariff-setting process. |
+| **Foreign exchange** | Medium | Medium | Revenue in local currency; costs partly in USD. Include FX contingency. |
+| **Theft / vandalism** | Low–Medium | Medium | Site security included in OPEX. Community ownership stake recommended. |
+
+### 13.4 Risk Rating Summary
+
+{% set high_risks = [] %}
+{% if errors %}{% set _ = high_risks.append("Adapter failures") %}{% endif %}
+{% if grid_arrival and grid_arrival.evidence_summary.get("assessment") == "imminent" %}{% set _ = high_risks.append("Grid arrival") %}{% endif %}
+
+{% if high_risks %}
+**High-risk items requiring immediate attention:** {{ high_risks | join(", ") }}
+{% else %}
+No high-risk items identified that would prevent project progression to full feasibility study.
+{% endif %}

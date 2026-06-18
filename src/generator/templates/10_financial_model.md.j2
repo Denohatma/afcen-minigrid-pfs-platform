@@ -1,0 +1,95 @@
+## 10. Financial Model
+
+{% if financial %}
+### 10.1 Capital Expenditure (CAPEX)
+
+| Component | Cost (USD) | Share |
+|---|---|---|
+{% for name, cost in financial.capex_breakdown.items() %}
+| {{ name }} | {{ cost | usd }} | {{ (cost / financial.total_capex_usd * 100) | num(1) }}% |
+{% endfor %}
+| **Total CAPEX** | **{{ financial.total_capex_usd | usd }}** | **100%** |
+
+| Summary Metric | Value |
+|---|---|
+| Total CAPEX | {{ financial.total_capex_usd | usd }} |
+| CAPEX per Wp | ${{ financial.capex_per_wp }}/Wp |
+{% if distribution %}| CAPEX per connection | {{ (financial.total_capex_usd / distribution.customers_connected) | usd }} |{% endif %}
+
+### 10.2 Operating Expenditure (OPEX)
+
+| Component | Annual Cost (USD) | Share |
+|---|---|---|
+{% for name, cost in financial.opex_breakdown.items() %}
+| {{ name }} | {{ cost | usd }} | {{ (cost / financial.annual_opex_usd * 100) | num(1) }}% |
+{% endfor %}
+| **Total Annual OPEX** | **{{ financial.annual_opex_usd | usd }}** | **100%** |
+
+### 10.3 Financing Structure
+
+| Source | Amount (USD) | Share |
+|---|---|---|
+| Grant / subsidy | {{ financial.grant_amount_usd | usd }} | {{ (financial.grant_amount_usd / financial.total_capex_usd * 100) | num(1) }}% |
+| Concessional debt | {{ financial.debt_amount_usd | usd }} | {{ (financial.debt_amount_usd / financial.total_capex_usd * 100) | num(1) }}% |
+| Equity | {{ financial.equity_amount_usd | usd }} | {{ (financial.equity_amount_usd / financial.total_capex_usd * 100) | num(1) }}% |
+| **Total** | **{{ financial.total_capex_usd | usd }}** | **100%** |
+
+### 10.4 Revenue Model
+
+| Parameter | Value |
+|---|---|
+| Base tariff | ${{ site.tariff_scenarios.get("base", 0.40) }}/kWh |
+| Year 1 revenue (base tariff) | {{ financial.annual_revenue_base_usd | usd }} |
+{% if carbon %}| Carbon revenue (market @ $12/tCO₂e) | {{ carbon.revenue_by_scenario.get("market", 0) | usd }}/yr |{% endif %}
+
+#### Tariff Scenario Analysis
+
+| Scenario | Tariff ($/kWh) | Year 1 Revenue | Project IRR |
+|---|---|---|---|
+{% for name, result in financial.tariff_scenario_results.items() %}
+| {{ name | title }} | ${{ result.tariff_usd_kwh }} | {{ result.year1_revenue_usd | usd }} | {{ (result.project_irr * 100) | num(1) }}% |
+{% endfor %}
+
+### 10.5 Key Financial Metrics
+
+| Metric | Value |
+|---|---|
+| **LCOE** | **${{ financial.lcoe_usd_kwh }}/kWh** |
+| **Project IRR** | **{{ (financial.project_irr * 100) | num(1) }}%** |
+| **Equity IRR** | **{{ (financial.equity_irr * 100) | num(1) }}%** |
+| **NPV (@ 10%)** | **{{ financial.npv_at_10pct | usd }}** |
+| **DSCR (minimum)** | **{{ financial.dscr_min }}x** |
+| **Simple payback** | **{{ financial.simple_payback_years }} years** |
+| Subsidy required | {{ financial.subsidy_required_usd | usd }} ({{ financial.subsidy_pct_capex }}% of CAPEX) |
+| Subsidy per connection | {{ financial.subsidy_per_connection_usd | usd }} |
+
+### 10.6 25-Year Cashflow Summary
+
+| Year | Revenue | Carbon Rev | OPEX | Replacement | Debt Service | Net CF | Cumulative |
+|---|---|---|---|---|---|---|---|
+{% for cf in financial.cashflow_25yr %}
+{% if cf.year <= 5 or cf.year == 10 or cf.year == 15 or cf.year == 20 or cf.year == 25 or cf.replacement_capex_usd > 0 %}
+| {{ cf.year }} | {{ cf.revenue_usd | usd }} | {{ cf.carbon_revenue_usd | usd }} | {{ cf.opex_usd | usd }} | {{ cf.replacement_capex_usd | usd }} | {{ cf.debt_service_usd | usd }} | {{ cf.net_cashflow_usd | usd }} | {{ cf.cumulative_cashflow_usd | usd }} |
+{% endif %}
+{% endfor %}
+
+### 10.7 Sensitivity Analysis
+
+| Variable | Base | Downside | Upside | Base IRR | Down IRR | Up IRR | Impact |
+|---|---|---|---|---|---|---|---|
+{% for s in financial.sensitivity_results %}
+| {{ s.variable }} | {{ s.base_value | num(4) }} | {{ s.downside_value | num(4) }} | {{ s.upside_value | num(4) }} | {{ (s.base_irr * 100) | num(1) }}% | {{ (s.downside_irr * 100) | num(1) }}% | {{ (s.upside_irr * 100) | num(1) }}% | {{ s.irr_impact_pct | num(1) }}pp |
+{% endfor %}
+
+The most sensitive variables are **{{ financial.sensitivity_results[0].variable }}** and **{{ financial.sensitivity_results[1].variable }}**, which should receive particular attention in due diligence.
+
+{% if financial.warnings %}
+### Financial Model Notes
+{% for w in financial.warnings %}
+- {{ w }}
+{% endfor %}
+{% endif %}
+
+{% else %}
+[DATA GAP: Financial model adapter did not produce output. {{ errors.get("financial_model", "Unknown error") }}. Action required: Ensure hybrid sizing and distribution adapters produced valid output.]
+{% endif %}

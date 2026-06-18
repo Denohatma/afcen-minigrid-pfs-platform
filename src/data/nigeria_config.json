@@ -1,0 +1,85 @@
+{
+  "_doc": "Nigeria country configuration. Source: DARES PAD, NERC MYTO 2024, National Energy Compact, RMI DER Roadmap.",
+  "country": "Nigeria",
+  "currency": "NGN",
+  "currency_symbol": "₦",
+  "exchange_rate_ngn_usd": 1600,
+  "population": 227884267,
+  "population_growth_rate": 0.026,
+  "persons_per_hh": {"rural": 5.0, "periurban": 4.5, "urban": 4.2},
+  "national_electrification_rate": 0.61,
+  "grid_tariff_usd_kwh": 0.12,
+  "coordinate_bounds": {"lat_min": 4.0, "lat_max": 14.0, "lon_min": 3.0, "lon_max": 15.0},
+  "map_center": {"lat": 9.07, "lon": 7.40, "zoom": 6},
+  "regulator": "NERC",
+  "implementing_agency": "REA",
+  "utility_type": "DisCos",
+  "discos": [
+    {"name": "AEDC", "full_name": "Abuja Electricity Distribution Company", "states": ["FCT", "Niger", "Kogi", "Nasarawa"]},
+    {"name": "BEDC", "full_name": "Benin Electricity Distribution Company", "states": ["Edo", "Delta", "Ondo", "Ekiti"]},
+    {"name": "EKEDC", "full_name": "Eko Electricity Distribution Company", "states": ["Lagos (South)"]},
+    {"name": "EEDC", "full_name": "Enugu Electricity Distribution Company", "states": ["Enugu", "Abia", "Imo", "Anambra", "Ebonyi"]},
+    {"name": "IBEDC", "full_name": "Ibadan Electricity Distribution Company", "states": ["Oyo", "Ogun", "Osun", "Kwara"]},
+    {"name": "IE", "full_name": "Ikeja Electric", "states": ["Lagos (North)"]},
+    {"name": "JED", "full_name": "Jos Electricity Distribution Company", "states": ["Plateau", "Benue", "Bauchi", "Gombe"]},
+    {"name": "KE", "full_name": "Kaduna Electric", "states": ["Kaduna", "Sokoto", "Kebbi", "Zamfara"]},
+    {"name": "KEDCO", "full_name": "Kano Electricity Distribution Company", "states": ["Kano", "Katsina", "Jigawa"]},
+    {"name": "PHEDC", "full_name": "Port Harcourt Electricity Distribution Company", "states": ["Rivers", "Cross River", "Akwa Ibom", "Bayelsa"]},
+    {"name": "YEDC", "full_name": "Yola Electricity Distribution Company", "states": ["Adamawa", "Borno", "Yobe", "Taraba"]}
+  ],
+  "nerc_bands": {
+    "A": {"supply_hours_min": 20, "tariff_ngn_kwh": 225, "target": false},
+    "B": {"supply_hours_min": 16, "tariff_ngn_kwh": 180, "target": false},
+    "C": {"supply_hours_min": 12, "tariff_ngn_kwh": 140, "target": true},
+    "D": {"supply_hours_min": 8, "tariff_ngn_kwh": 100, "target": true},
+    "E": {"supply_hours_min": 4, "tariff_ngn_kwh": 60, "target": true}
+  },
+  "band_to_tier": {
+    "A": 5, "B": 4, "C": 3, "D": 2, "E": 1, "unserved": 1
+  },
+  "mtf_tiers": {
+    "1": {"annual_kwh_hh": 38.7, "description": "Very low — lighting only"},
+    "2": {"annual_kwh_hh": 219, "description": "Low — phone charging, radio"},
+    "3": {"annual_kwh_hh": 803, "description": "Moderate — fan, TV, small appliances"},
+    "4": {"annual_kwh_hh": 2117, "description": "High — refrigeration, multiple appliances"},
+    "5": {"annual_kwh_hh": 2993, "description": "Very high — industrial, motors"}
+  },
+  "performance_standards": {
+    "saidi_max_hours": 45,
+    "saifi_max_events": 20,
+    "availability_target": 0.95,
+    "max_outage_hours": 4,
+    "connection_ramp": [0.60, 0.70, 0.80, 0.85, 0.90]
+  },
+  "esia_framework": {
+    "decree": "EIA Act Cap E12 LFN 2004",
+    "administering_body": "NESREA",
+    "supplementary": "NESREA Act 2007"
+  },
+  "ndc_targets": {
+    "emission_reduction_pct": 0.47,
+    "target_year": 2030,
+    "net_zero_year": 2060
+  },
+  "dares": {
+    "program_name": "Nigeria Distributed Access through Renewable Energy Scale-Up",
+    "ida_credit_usd": 750000000,
+    "component_1_minigrids_usd": 1023000000,
+    "component_2_sas_usd": 715000000,
+    "component_3_ta_usd": 80000000,
+    "implementing_agency": "REA",
+    "grant_range_pct": [0.20, 0.40],
+    "grant_per_connection_range_usd": [300, 800]
+  },
+  "solar_fallback": {
+    "north": {
+      "monthly_ghi": [210, 200, 205, 195, 185, 165, 145, 155, 185, 205, 215, 210],
+      "monthly_temp": [26, 28, 32, 35, 35, 30, 27, 27, 29, 31, 30, 27]
+    },
+    "south": {
+      "monthly_ghi": [175, 180, 175, 160, 140, 110, 95, 105, 145, 175, 180, 175],
+      "monthly_temp": [28, 29, 29, 28, 27, 25, 24, 24, 26, 27, 28, 28]
+    },
+    "latitude_threshold": 8.0
+  }
+}

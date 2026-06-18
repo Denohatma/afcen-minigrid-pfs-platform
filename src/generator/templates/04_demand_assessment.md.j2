@@ -1,0 +1,76 @@
+## 4. Demand Assessment
+
+{% if demand %}
+### 4.1 Methodology
+
+Demand estimation follows a bottom-up approach using sector-specific load benchmarks calibrated to Sub-Saharan African mini-grid deployments. Each customer segment is assigned a benchmark peak load (kW) and an hourly load shape profile. Diversity factors are applied based on customer count to reflect coincidence of peak demand.
+
+### 4.2 Customer Demand Summary
+
+| Segment | Count | Unit Load (kW) | Diversified Peak (kW) | Annual kWh |
+|---|---|---|---|---|
+{% for detail in demand.customer_details %}
+| {{ detail.category | replace("_", " ") | title }}{% if detail.sub_type %} ({{ detail.sub_type }}){% endif %} | {{ detail.count }} | {{ detail.peak_load_per_unit_kw | num(2) }} | {{ detail.diversified_peak_kw | num(2) }} | {{ detail.annual_demand_kwh | num }} |
+{% endfor %}
+
+### 4.3 Peak Load and Annual Demand
+
+| Metric | Value |
+|---|---|
+| **System peak demand** | **{{ demand.peak_load_kw | num(1) }} kW** |
+| **Annual demand** | **{{ demand.annual_demand_kwh | num }} kWh** |
+| Load factor | {{ ((demand.annual_demand_kwh / (demand.peak_load_kw * 8760)) * 100) | num(1) }}% |
+| Average demand | {{ (demand.annual_demand_kwh / 8760) | num(1) }} kW |
+
+### 4.4 Load Profile
+
+The composite load profile is generated from 24-hour normalised load shapes for each customer segment, scaled by peak demand and diversity factor, and repeated across 8,760 hours.
+
+Key characteristics:
+{% set evening_hours = [] %}
+{% set day_hours = [] %}
+{% for h in range(24) %}
+{% if h >= 17 and h <= 22 %}{% set _ = evening_hours.append(demand.hourly_profile_8760[h]) %}{% endif %}
+{% if h >= 8 and h <= 16 %}{% set _ = day_hours.append(demand.hourly_profile_8760[h]) %}{% endif %}
+{% endfor %}
+- Evening peak period: 17:00–22:00
+- Daytime institutional/productive load: 08:00–16:00
+- Minimum load period: 00:00–05:00
+
+### 4.5 Demand Growth Scenarios
+
+| Scenario | Annual Growth | Year 5 Demand (kWh) | Year 10 Demand (kWh) |
+|---|---|---|---|
+{% set rates = {"conservative": 2, "base": 5, "growth": 8} %}
+{% for name, yearly in demand.growth_scenarios.items() %}
+| {{ name | title }} | {{ rates.get(name, "—") }}% | {{ yearly[5] | num }} | {{ yearly[10] | num }} |
+{% endfor %}
+
+### 4.6 Productive Use Opportunities
+
+The demand assessment identifies the following productive-use loads that drive daytime demand and improve system utilisation:
+{% set pue_types = ["grain_mill", "fish_chilling", "rice_processing", "cotton_processing", "irrigation_pump", "cold_storage", "oil_press", "welding", "carpentry", "tailoring", "bakery", "ice_making", "water_pump"] %}
+{% set has_pue = [] %}
+{% for a in site.anchors %}
+{% if a.load_type in pue_types %}
+{% set _ = has_pue.append(a) %}
+- **{{ a.name }}** ({{ a.load_type | replace("_", " ") | title }}): {% if a.estimated_load_kw %}{{ a.estimated_load_kw }} kW estimated{% else %}benchmark load applied{% endif %}
+{% endif %}
+{% endfor %}
+
+{% if has_pue %}
+Productive use of energy (PUE) is critical for mini-grid financial sustainability — it increases daytime demand when solar generation peaks, improves load factor, and generates economic returns that strengthen communities' ability to pay for electricity. **Section 4b** provides a comprehensive analysis of value chain electrification opportunities, including business cases, financing pathways, and prioritised recommendations.
+{% else %}
+No dedicated productive-use anchor loads were identified in the current site data. However, opportunities for PUE development typically exist in most rural communities. **Section 4b** provides a comprehensive analysis of potential value chains that can be mechanised and electrified, with business cases and implementation recommendations.
+{% endif %}
+
+{% if demand.warnings %}
+### Demand Assessment Notes
+{% for w in demand.warnings %}
+- {{ w }}
+{% endfor %}
+{% endif %}
+
+{% else %}
+[DATA GAP: Demand assessment adapter did not produce output. {{ errors.get("demand_assessment", "Unknown error") }}. Action required: Review site data customer segmentation and re-run.]
+{% endif %}

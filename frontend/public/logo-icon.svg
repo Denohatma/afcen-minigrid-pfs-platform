@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="250" zoomAndPan="magnify" viewBox="0 0 187.5 187.499992" height="250" preserveAspectRatio="xMidYMid meet" version="1.2">
+  <defs>
+    <style>
+      @keyframes draw {
+        to { stroke-dashoffset: 0; }
+      }
+      @keyframes fillIn {
+        to { fill-opacity: 1; }
+      }
+      
+      /* Orange shape keeps it simple, or animate it too? The user specifically asked for the green lines. */
+      .orange {
+        animation: fillIn 1s ease-in forwards;
+        fill-opacity: 0;
+      }
+
+      .green-line {
+        fill-opacity: 0;
+        stroke-dasharray: 1;
+        stroke-dashoffset: 1;
+        stroke-width: 1px;
+      }
+
+      .green-line:nth-child(2) {
+        stroke: #006811;
+        animation: draw 2s ease-in-out forwards, fillIn 1s cubic-bezier(0.4, 0, 0.2, 1) 1.5s forwards;
+      }
+      .green-line:nth-child(3) {
+        stroke: #00943c;
+        animation: draw 2s ease-in-out forwards 0.5s, fillIn 1s cubic-bezier(0.4, 0, 0.2, 1) 2s forwards;
+      }
+      .green-line:nth-child(4) {
+        stroke: #63b32e;
+        animation: draw 2s ease-in-out forwards 1s, fillIn 1s cubic-bezier(0.4, 0, 0.2, 1) 2.5s forwards;
+      }
+      .green-line:nth-child(5) {
+        stroke: #63b32e;
+        animation: draw 2s ease-in-out forwards 1.5s, fillIn 1s cubic-bezier(0.4, 0, 0.2, 1) 3s forwards;
+      }
+    </style>
+  </defs>
+  <g id="7efee0484b">
+    <path class="orange" style="stroke:none;fill-rule:nonzero;fill:#ff7f50;" d="M 93.46875 0.0664062 C 68.578125 0.0820312 44.71875 10.023438 27.183594 27.691406 L 83.003906 32.578125 L 19.171875 36.917969 C 12.84375 45.246094 7.960938 54.574219 4.71875 64.519531 L 33.457031 67.035156 L 3.253906 69.089844 C 1.082031 77.070312 -0.0234375 85.296875 -0.0273438 93.5625 C 0.00390625 97.992188 0.351562 102.417969 1.007812 106.796875 C 33.191406 84.59375 72.878906 71.472656 115.832031 71.476562 C 140.710938 71.472656 164.488281 75.886719 186.359375 83.902344 C 185.308594 74.023438 182.691406 64.378906 178.609375 55.328125 L 142.328125 52.863281 L 175.972656 49.914062 C 170.730469 40.027344 163.753906 31.164062 155.371094 23.742188 L 86.722656 20.621094 L 147.015625 17.132812 C 131.339844 6.085938 112.644531 0.125 93.46875 0.0664062 Z M 93.46875 0.0664062 "/>
+    <path class="green-line" pathLength="1" style="fill-rule:nonzero;fill:#006811;" d="M 127.796875 77.070312 C 79.53125 77.070312 36.300781 97.375 7.199219 129.40625 C 10.675781 137.792969 15.355469 145.625 21.089844 152.660156 C 47.746094 111.226562 96.078125 83.535156 151.265625 83.535156 C 162.851562 83.535156 174.128906 84.765625 184.964844 87.074219 C 167.226562 80.613281 147.953125 77.070312 127.796875 77.070312 Z M 127.796875 77.070312 "/>
+    <path class="green-line" pathLength="1" style="fill-rule:nonzero;fill:#00943c;" d="M 160.621094 87.914062 C 104.429688 87.914062 56.96875 123.109375 41.714844 171.371094 C 49.859375 176.773438 58.804688 180.867188 68.222656 183.496094 C 75.902344 130.972656 123.734375 90.515625 181.617188 90.515625 C 183.375 90.515625 185.121094 90.558594 186.859375 90.632812 L 186.859375 90.546875 C 178.402344 88.828125 169.625 87.914062 160.625 87.914062 "/>
+    <path class="green-line" pathLength="1" style="fill-rule:nonzero;fill:#63b32e;" d="M 186.949219 93.824219 C 136.171875 94.683594 95.289062 133.71875 95.292969 181.75 C 95.292969 183.511719 95.355469 185.253906 95.460938 186.988281 C 106.78125 186.746094 117.960938 184.445312 128.460938 180.207031 C 127.695312 176.054688 127.289062 171.78125 127.289062 167.421875 C 127.289062 132.746094 152.660156 103.667969 186.859375 95.703125 C 186.898438 95.078125 186.925781 94.453125 186.949219 93.824219 Z M 186.949219 93.824219 "/>
+    <path class="green-line" pathLength="1" style="fill-rule:nonzero;fill:#63b32e;" d="M 186.636719 100.175781 C 163.160156 109.097656 146.589844 130.746094 146.589844 156.050781 C 146.589844 160.589844 147.136719 165.011719 148.148438 169.261719 C 170.5625 153.058594 184.660156 127.761719 186.636719 100.175781 Z M 186.636719 100.175781 "/>
+  </g>
+</svg>

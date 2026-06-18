@@ -1,0 +1,72 @@
+{
+  "_doc": "Default financial assumptions for Nigeria minigrid PFS. Based on RMI/GEAPP IMG pilot data (2024-2025), DARES program parameters, and NERC MYTO tariff framework.",
+  "project_lifetime_years": 25,
+  "discount_rate": 0.10,
+  "inflation_rate": 0.05,
+  "degradation_rate_per_year": 0.005,
+
+  "capex_unit_costs": {
+    "pv_modules_usd_per_kwp": 580,
+    "inverters_usd_per_kwac": 400,
+    "mounting_usd_per_kwp": 220,
+    "bos_usd_per_kwp": 280,
+    "battery_ems_usd_per_kwh": 350,
+    "civil_works_fixed_usd": 20000,
+    "interconnection_usd_per_kwp": 86,
+    "distribution_cost_usd_per_connection": 503,
+    "owners_cost_pct": 0.12,
+    "epc_margin_pct": 0.08,
+    "contingency_pct": 0.075
+  },
+
+  "opex": {
+    "generation_om_pct_of_capex": 0.035,
+    "distribution_om_pct_of_capex": 0.02,
+    "site_security_usd_yr": 1500,
+    "remote_monitoring_usd_yr": 800,
+    "insurance_pct_of_capex": 0.005,
+    "duos_pct_of_generation_value": 0.02
+  },
+
+  "replacement_cycles": {
+    "battery_replacement_year": 10,
+    "battery_replacement_pct_of_original": 0.60,
+    "inverter_replacement_year": 12,
+    "inverter_replacement_pct_of_original": 0.40
+  },
+
+  "financing": {
+    "default_grant_pct": 0.40,
+    "default_debt_pct": 0.35,
+    "default_equity_pct": 0.25,
+    "concessional_debt_rate": 0.08,
+    "debt_tenor_years": 15,
+    "grace_period_years": 2
+  },
+
+  "technical": {
+    "technical_losses_pct": 0.08,
+    "performance_ratio": 0.77,
+    "genset_efficiency": 0.33,
+    "diesel_energy_density_kwh_per_litre": 10.0,
+    "pms_energy_density_kwh_per_litre": 9.1
+  },
+
+  "connection_growth": {
+    "conservative_pct_yr": 0.03,
+    "base_pct_yr": 0.08,
+    "growth_pct_yr": 0.12,
+    "year1_connection_pct": 0.60
+  },
+
+  "tariff_benchmarks": {
+    "_doc": "Nigeria tariff context from NERC MYTO 2024 and IMG pilot operational data",
+    "nerc_band_a_ngn_kwh": 225,
+    "nerc_cost_reflective_avg_ngn_kwh": 129,
+    "self_generation_low_ngn_kwh": 553,
+    "self_generation_high_ngn_kwh": 967,
+    "img_pilot_low_ngn_kwh": 150,
+    "img_pilot_high_ngn_kwh": 450,
+    "fx_rate_ngn_usd": 1600
+  }
+}

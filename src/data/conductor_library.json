@@ -1,0 +1,93 @@
+{
+  "_doc": "Conductor and pole specifications for LV/MV distribution. Source: Build spec Section 4.3, RMI/GEAPP Nigeria IMG pilot benchmarks.",
+  "conductors": {
+    "ACSR_Rabbit": {
+      "cross_section_mm2": 6.16,
+      "ampacity_a": 105,
+      "resistance_ohm_per_km": 4.70,
+      "reactance_ohm_per_km": 0.35,
+      "cost_usd_per_km": 1200,
+      "max_power_kw_at_04kv": 24,
+      "typical_use": "Service drops, short LV feeders"
+    },
+    "ACSR_Dog": {
+      "cross_section_mm2": 26.24,
+      "ampacity_a": 189,
+      "resistance_ohm_per_km": 1.09,
+      "reactance_ohm_per_km": 0.31,
+      "cost_usd_per_km": 2800,
+      "max_power_kw_at_04kv": 44,
+      "typical_use": "Main LV feeders"
+    },
+    "ACSR_Wolf": {
+      "cross_section_mm2": 105.0,
+      "ampacity_a": 320,
+      "resistance_ohm_per_km": 0.30,
+      "reactance_ohm_per_km": 0.28,
+      "cost_usd_per_km": 5500,
+      "max_power_kw_at_04kv": 74,
+      "typical_use": "Backbone feeders, high-load segments"
+    },
+    "ABC_16mm2": {
+      "cross_section_mm2": 16.0,
+      "ampacity_a": 75,
+      "resistance_ohm_per_km": 1.91,
+      "reactance_ohm_per_km": 0.08,
+      "cost_usd_per_km": 1800,
+      "max_power_kw_at_04kv": 17,
+      "typical_use": "Aerial bundled, common for minigrids"
+    },
+    "ABC_35mm2": {
+      "cross_section_mm2": 35.0,
+      "ampacity_a": 125,
+      "resistance_ohm_per_km": 0.87,
+      "reactance_ohm_per_km": 0.07,
+      "cost_usd_per_km": 3200,
+      "max_power_kw_at_04kv": 29,
+      "typical_use": "Main feeder, medium loads"
+    }
+  },
+  "poles": {
+    "treated_wood_8m": {"height_m": 8, "cost_usd": 60, "typical_span_m": 40, "use": "LV distribution, rural standard"},
+    "treated_wood_10m": {"height_m": 10, "cost_usd": 85, "typical_span_m": 45, "use": "LV distribution, road crossings"},
+    "concrete_9m": {"height_m": 9, "cost_usd": 120, "typical_span_m": 45, "use": "LV distribution, durable"},
+    "concrete_11m": {"height_m": 11, "cost_usd": 160, "typical_span_m": 50, "use": "MV distribution, main routes"}
+  },
+  "mv_conductors": {
+    "MV_11kV": {
+      "cost_usd_per_km": 18000,
+      "typical_use": "IMG interconnection to DisCo 11kV feeder"
+    },
+    "MV_33kV": {
+      "cost_usd_per_km": 28000,
+      "typical_use": "IMG interconnection to DisCo 33kV feeder"
+    }
+  },
+  "interconnection": {
+    "step_up_transformer_500kva_usd": 12000,
+    "step_up_transformer_1000kva_usd": 18000,
+    "bulk_meter_usd": 3000,
+    "protection_panel_usd": 8000,
+    "avr_usd": 5000,
+    "_doc": "Interconnection equipment costs from RMI Nigeria IMG pilot data. Range US$15,000-120,000 per project."
+  },
+  "service_drop": {
+    "cost_per_connection_usd": 250,
+    "includes": "Drop wire, prepaid meter, meter box, internal wiring support",
+    "typical_length_m": 15
+  },
+  "protection": {
+    "pct_of_conductor_plus_pole": 0.06,
+    "includes": "Fuses, surge arresters, earthing"
+  },
+  "construction_multipliers": {
+    "flat_accessible": 1.30,
+    "rolling_rural": 1.45,
+    "hilly_remote": 1.60,
+    "mountainous": 1.80
+  },
+  "soft_cost_pct": 0.12,
+  "default_voltage_kv": 0.4,
+  "max_voltage_drop_pct": 7.0,
+  "power_factor": 0.85
+}

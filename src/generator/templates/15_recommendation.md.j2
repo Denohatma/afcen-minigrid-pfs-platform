@@ -1,0 +1,109 @@
+## 15. Recommendation
+
+### 15.1 Overall Assessment: **{{ recommendation }}**
+
+{% if recommendation == "Go" %}
+The {{ site.site_name }} solar hybrid mini-grid project is **recommended to proceed** to full feasibility study and detailed engineering design.
+
+**Basis for recommendation:**
+- Project IRR of {{ (financial.project_irr * 100) | num(1) }}% exceeds the 8% threshold under base-case assumptions
+- Subsidy requirement of {{ financial.subsidy_pct_capex }}% of CAPEX is within acceptable range (≤50%)
+- Strong solar resource ({{ solar.annual_ghi_kwh_m2 | num(0) }} kWh/m²/yr) supports reliable generation
+- {{ demand.total_customers }} customer connections provide adequate demand base
+- No critical environmental or social constraints identified
+{% if grid_arrival %}- Grid-arrival risk assessed as "{{ grid_arrival.evidence_summary.get("assessment", "unknown") }}" — manageable{% endif %}
+
+{% elif recommendation == "Conditional Go" %}
+The {{ site.site_name }} solar hybrid mini-grid project is **conditionally recommended** to proceed, subject to resolution of the following conditions:
+
+**Conditions to address:**
+{% if financial and financial.project_irr < 0.08 %}
+- Project IRR of {{ (financial.project_irr * 100) | num(1) }}% is below the 8% unconditional threshold. Explore: higher tariff scenarios, additional grant funding, or demand stimulation to improve returns.
+{% endif %}
+{% if financial and financial.subsidy_pct_capex > 50 %}
+- Subsidy requirement of {{ financial.subsidy_pct_capex }}% exceeds 50% of CAPEX. Verify availability of grant funding.
+{% endif %}
+{% if financial and financial.dscr_min < 1.2 %}
+- Minimum DSCR of {{ financial.dscr_min }}x is below the 1.2x comfort threshold for lenders.
+{% endif %}
+{% if errors %}
+- The following adapter(s) failed, leaving data gaps: {{ errors.keys() | list | join(", ") }}
+{% endif %}
+{% if grid_arrival and grid_arrival.evidence_summary.get("assessment") in ["imminent", "likely"] %}
+- Grid arrival assessed as "{{ grid_arrival.evidence_summary.get("assessment") }}" — transition strategy required.
+{% endif %}
+
+**Path to unconditional Go:**
+1. Conduct willingness-to-pay survey to validate tariff assumptions
+2. Confirm grant / concessional finance availability
+3. Complete site survey to ground-truth demand estimates
+{% if grid_arrival and grid_arrival.evidence_summary.get("assessment") in ["imminent", "likely"] %}4. Develop grid integration / transition plan per ESMAP {{ grid_arrival.recommended_scenario }} framework{% endif %}
+
+{% elif recommendation == "Redesign" %}
+The current system configuration does not meet minimum financial viability thresholds. However, the underlying demand fundamentals suggest potential with a modified approach.
+
+**Redesign recommendations:**
+- Review system sizing — current configuration may be over- or under-sized
+- Explore alternative tariff structures (e.g., productive-use premium tariff)
+- Consider phased deployment to match demand growth
+- Evaluate higher grant percentage or blended finance structures
+{% if financial %}- Current IRR: {{ (financial.project_irr * 100) | num(1) }}% (target: ≥5% for conditional, ≥8% for unconditional){% endif %}
+
+{% elif recommendation == "No-Go" %}
+Critical constraints have been identified that prevent the project from proceeding:
+
+{% if not demand %}- Demand assessment could not be completed — fundamental viability cannot be established{% endif %}
+{% if grid_arrival and grid_arrival.evidence_summary.get("assessment") == "imminent" %}- Grid arrival is imminent with no viable transition strategy{% endif %}
+{% if site.protected_area_overlap %}- Protected area overlap requires environmental clearance{% endif %}
+
+{% else %}
+Insufficient data was available to generate a definitive recommendation. The following issues must be resolved:
+
+{% for name, error in errors.items() %}
+- **{{ name | replace("_", " ") | title }}:** {{ error }}
+{% endfor %}
+
+Re-run the analysis after resolving these issues.
+{% endif %}
+
+### 15.2 Key Metrics Summary
+
+{% if financial %}
+| Metric | Value | Threshold | Status |
+|---|---|---|---|
+| Project IRR | {{ (financial.project_irr * 100) | num(1) }}% | ≥ 8% (Go) / ≥ 5% (Conditional) | {{ "✓" if financial.project_irr >= 0.08 else "△" if financial.project_irr >= 0.05 else "✗" }} |
+| LCOE | ${{ financial.lcoe_usd_kwh }}/kWh | < base tariff (${{ site.tariff_scenarios.get("base", 0.40) }}/kWh) | {{ "✓" if financial.lcoe_usd_kwh < site.tariff_scenarios.get("base", 0.40) else "✗" }} |
+| Subsidy % | {{ financial.subsidy_pct_capex }}% | ≤ 50% | {{ "✓" if financial.subsidy_pct_capex <= 50 else "✗" }} |
+| DSCR (min) | {{ financial.dscr_min }}x | ≥ 1.2x | {{ "✓" if financial.dscr_min >= 1.2 else "△" if financial.dscr_min >= 1.0 else "✗" }} |
+| Unmet demand | {{ sizing.unmet_demand_pct }}% | ≤ 5% | {{ "✓" if sizing.unmet_demand_pct <= 5 else "✗" }} |
+{% if carbon %}| CO₂ reductions | {{ carbon.annual_emission_reductions_tco2e }} tCO₂e/yr | > 0 | ✓ |{% endif %}
+{% endif %}
+
+### 15.3 Productive Use & Value Chain Recommendations
+
+Productive use of energy is a key driver of mini-grid financial sustainability. The following actions are recommended to unlock value from local value chains (see **Section 4b** for detailed analysis):
+
+{% set pue_anchors = [] %}
+{% for a in site.anchors %}
+{% if a.load_type in ["grain_mill", "fish_chilling", "rice_processing", "cotton_processing", "irrigation_pump", "cold_storage", "oil_press", "welding", "carpentry", "tailoring", "bakery", "ice_making", "water_pump"] %}
+{% set _ = pue_anchors.append(a) %}
+{% endif %}
+{% endfor %}
+{% if pue_anchors %}
+1. **Prioritise identified PUE anchors** — {{ pue_anchors | length }} productive-use load(s) identified should be supported with technical assistance, equipment financing, and business development services from project commissioning
+2. **Establish PUE financing facility** — Partner with MFIs or use results-based financing to provide asset finance for electric appliances (typical payback: 12–24 months)
+3. **Design tariff incentives** — Introduce time-of-use or productive-use tariff tiers to incentivise daytime consumption and improve load factor
+4. **Include PUE in full feasibility** — Commission demand study validation with focus on productive-use load materialisation and willingness-to-pay for electric alternatives
+{% else %}
+1. **Conduct PUE baseline survey** — Identify existing manual/diesel-powered activities in the community that can be electrified (grain milling, cold storage, water pumping, tailoring, welding)
+2. **Develop PUE stimulation programme** — Budget for technical assistance, demonstration equipment, and business training to catalyse productive use uptake
+3. **Design tariff incentives** — Include productive-use tariff tiers to encourage daytime demand and improve system load factor
+4. **Partner with value chain actors** — Engage equipment suppliers, microfinance institutions, and agricultural extension services to support PUE development
+{% endif %}
+
+### 15.4 Next Steps
+
+1. **Immediate:** Share PFS with project stakeholders and financing partners
+2. **Short-term (0–3 months):** Commission full feasibility study with site survey; initiate PUE baseline assessment
+3. **Medium-term (3–8 months):** Secure financing, complete ESIA, obtain permits; establish PUE financing facility
+4. **Long-term (8–18 months):** EPC procurement, construction, commissioning; deploy PUE support programme

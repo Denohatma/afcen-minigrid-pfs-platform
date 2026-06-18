@@ -1,0 +1,90 @@
+## Annexes
+
+### Annex A: Source Coverage Matrix
+
+| Input | Source | Provenance |
+|---|---|---|
+| Site coordinates | Site data file | Field GPS / mapping |
+| Population & structures | Site data file | Satellite imagery / census |
+| Customer segmentation | Site data file | Community survey / estimation |
+| Solar irradiance | PVGIS v5.3 (SARAH3) | Satellite-derived, 2005–2023 average |
+| Demand benchmarks | Sector load library | Sub-Saharan Africa mini-grid deployments |
+| Load shapes | 24-hour normalised profiles | Industry standard profiles |
+| Conductor costs | Conductor library | Recent procurement benchmarks |
+| Financial assumptions | Financial defaults | Industry benchmarks, {{ site.country }} context |
+| Grid-arrival evidence | Site data file | Utility/government sources |
+
+### Annex B: Monthly Solar Resource Data
+
+{% if solar %}
+| Month | GHI (kWh/m²) | DNI (kWh/m²) | Avg Temp (°C) |
+|---|---|---|---|
+{% set months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"] %}
+{% for i in range(12) %}
+| {{ months[i] }} | {{ solar.monthly_ghi_kwh_m2[i] | num(1) }} | {{ solar.monthly_dni_kwh_m2[i] | num(1) }} | {{ solar.monthly_temp_c[i] | num(1) }} |
+{% endfor %}
+| **Annual** | **{{ solar.annual_ghi_kwh_m2 | num(1) }}** | **{{ solar.monthly_dni_kwh_m2 | sum | num(1) }}** | **{{ (solar.monthly_temp_c | sum / 12) | num(1) }}** |
+{% else %}
+[Solar resource data not available]
+{% endif %}
+
+### Annex C: Monthly Generation Profile
+
+{% if sizing %}
+| Month | Generation (kWh) |
+|---|---|
+{% set months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"] %}
+{% for i in range(sizing.monthly_generation_kwh | length) %}
+| {{ months[i] }} | {{ sizing.monthly_generation_kwh[i] | num }} |
+{% endfor %}
+| **Annual Total** | **{{ sizing.monthly_generation_kwh | sum | num }}** |
+{% else %}
+[Generation data not available]
+{% endif %}
+
+### Annex D: Detailed CAPEX Breakdown
+
+{% if financial %}
+| Component | Cost (USD) | $/kWp | Share |
+|---|---|---|---|
+{% for name, cost in financial.capex_breakdown.items() %}
+| {{ name }} | {{ cost | usd }} | {% if sizing and sizing.pv_capacity_kwp > 0 %}{{ (cost / sizing.pv_capacity_kwp) | usd }}{% else %}—{% endif %} | {{ (cost / financial.total_capex_usd * 100) | num(1) }}% |
+{% endfor %}
+| **Total** | **{{ financial.total_capex_usd | usd }}** | **{% if sizing and sizing.pv_capacity_kwp > 0 %}{{ (financial.total_capex_usd / sizing.pv_capacity_kwp) | usd }}{% endif %}** | **100%** |
+{% else %}
+[Financial data not available]
+{% endif %}
+
+### Annex E: Sensitivity Analysis — Full Results
+
+{% if financial %}
+| Variable | Base Value | Downside | Upside | Base IRR | Down IRR | Up IRR | IRR Impact (pp) |
+|---|---|---|---|---|---|---|---|
+{% for s in financial.sensitivity_results %}
+| {{ s.variable }} | {{ s.base_value | num(4) }} | {{ s.downside_value | num(4) }} | {{ s.upside_value | num(4) }} | {{ (s.base_irr * 100) | num(2) }}% | {{ (s.downside_irr * 100) | num(2) }}% | {{ (s.upside_irr * 100) | num(2) }}% | {{ s.irr_impact_pct | num(1) }} |
+{% endfor %}
+{% else %}
+[Sensitivity data not available]
+{% endif %}
+
+### Annex F: Distribution Network Reference
+
+{% if distribution %}
+- **Method used:** {{ distribution.method_used }}
+- **Network GeoJSON:** Available in output directory (if OSM routing was used)
+- **Total line length:** {{ distribution.total_line_length_m | num }} m
+- **Pole count:** {{ distribution.pole_count }}
+{% else %}
+[Distribution data not available]
+{% endif %}
+
+### Annex G: Platform Execution Log
+
+| Adapter | Status | Time (s) |
+|---|---|---|
+{% for name in ["demand_assessment", "solar_resource", "grid_arrival", "hybrid_sizing", "distribution_routing", "carbon_assessment", "financial_model"] %}
+| {{ name | replace("_", " ") | title }} | {{ "✓ OK" if name not in errors else "✗ Failed" }} | {{ timings.get(name, 0) | num(1) }} |
+{% endfor %}
+
+**Platform version:** {{ platform_version }}
+**Generated:** {{ generation_date }}

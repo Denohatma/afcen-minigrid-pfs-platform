@@ -1,0 +1,74 @@
+## 7. Generation System Design
+
+{% if sizing %}
+### 7.1 System Configuration
+
+| Component | Specification |
+|---|---|
+| PV array capacity | **{{ sizing.pv_capacity_kwp }} kWp** |
+| Battery storage | **{{ sizing.battery_capacity_kwh }} kWh** |
+| Inverter capacity | **{{ sizing.inverter_capacity_kwac }} kWac** |
+| DC/AC ratio | {{ sizing.dc_ac_ratio }} |
+
+### 7.2 Design Rationale
+
+The system is sized to achieve:
+- ≤ 5% unmet demand target (achieved: {{ sizing.unmet_demand_pct }}%)
+- {{ sizing.autonomy_hours }}-hour evening autonomy
+- Balanced curtailment ({{ sizing.curtailment_pct }}%)
+
+{% if demand %}
+The PV array is sized at {{ (sizing.pv_capacity_kwp / demand.peak_load_kw) | num(1) }}x the peak demand of {{ demand.peak_load_kw | num(1) }} kW, reflecting the need to charge batteries during daylight hours for evening dispatch.
+{% endif %}
+
+### 7.3 PV Array
+
+| Parameter | Value |
+|---|---|
+| Capacity | {{ sizing.pv_capacity_kwp }} kWp |
+{% if solar %}| Specific yield | {{ solar.specific_yield_kwh_per_kwp | num }} kWh/kWp/yr |{% endif %}
+| Annual generation | {{ sizing.annual_generation_kwh | num }} kWh |
+{% if solar %}| Performance ratio | {{ (solar.performance_ratio * 100) | num(1) }}% |{% endif %}
+| Recommended module | Tier-1 monocrystalline, 550Wp+ |
+| Mounting | Ground-mounted, fixed tilt ({{ site.lat | abs | num(0) }}°) |
+
+{% if solar %}
+### 7.4 Loss Breakdown
+
+| Loss Category | Loss (%) |
+|---|---|
+{% for loss_name, loss_pct in solar.loss_breakdown.items() %}
+| {{ loss_name | replace("_", " ") | title }} | {{ (loss_pct * 100) | num(1) }}% |
+{% endfor %}
+{% endif %}
+
+### 7.5 Battery Energy Storage System
+
+| Parameter | Value |
+|---|---|
+| Capacity | {{ sizing.battery_capacity_kwh }} kWh |
+| Usable capacity (80% DoD) | {{ (sizing.battery_capacity_kwh * 0.8) | num(0) }} kWh |
+| Autonomy | {{ sizing.autonomy_hours }} hours at evening peak |
+| Chemistry | LFP (Lithium Iron Phosphate) recommended |
+| Annual cycles | ~{{ sizing.battery_cycles_per_year | num }} |
+| Expected lifetime | 10 years / 4,000+ cycles |
+
+### 7.6 Inverter / Power Conversion
+
+| Parameter | Value |
+|---|---|
+| Rated capacity | {{ sizing.inverter_capacity_kwac }} kWac |
+| DC/AC ratio | {{ sizing.dc_ac_ratio }} |
+| Topology | Hybrid inverter (grid-forming capable) |
+| Voltage | 400V 3-phase |
+
+{% if sizing.warnings %}
+### Generation Design Notes
+{% for w in sizing.warnings %}
+- {{ w }}
+{% endfor %}
+{% endif %}
+
+{% else %}
+[DATA GAP: Hybrid sizing adapter did not produce output. {{ errors.get("hybrid_sizing", "Unknown error") }}. Action required: Ensure demand and solar resource adapters produced valid output.]
+{% endif %}

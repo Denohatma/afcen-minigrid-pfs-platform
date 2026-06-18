@@ -1,0 +1,67 @@
+## 3. Site Overview
+
+### 3.1 Location
+
+{{ site.site_name }} is located in {{ site.district }} LGA, {{ site.province }} State, {{ site.country }} at coordinates **{{ site.lat }}°N, {{ site.lon }}°E**. The settlement has a population of approximately **{{ site.population | num }}** people with **{{ site.mapped_structures | num }}** mapped structures within a {{ (site.settlement_radius_m / 1000) | num(1) }} km radius.
+
+{% if site.access_description %}
+**Access:** {{ site.access_description }}
+{% endif %}
+
+{% if site.terrain %}
+**Terrain:** {{ site.terrain | title }}
+{% endif %}
+
+### 3.2 Community Profile
+
+{% if site.economic_activities %}
+**Economic activities:** {{ site.economic_activities | join(", ") }}
+{% endif %}
+
+{% if site.social_services %}
+**Social services:** {{ site.social_services | join(", ") }}
+{% endif %}
+
+### 3.3 Customer Segmentation Summary
+
+| Category | Sub-type | Count |
+|---|---|---|
+{% for c in site.customers %}
+| {{ c.category | replace("_", " ") | title }} | {{ c.sub_type }} | {{ c.count }} |
+{% endfor %}
+| **Total** | | **{{ site.total_customers }}** |
+
+### 3.4 Anchor Loads
+
+{% if site.anchors %}
+| Facility | Type | Estimated Load (kW) | Operating Hours |
+|---|---|---|---|
+{% for a in site.anchors %}
+| {{ a.name }} | {{ a.load_type | replace("_", " ") | title }} | {{ a.estimated_load_kw or "Benchmark" }} | {{ a.operating_hours or "Standard" }} |
+{% endfor %}
+{% else %}
+No anchor loads have been identified for this site.
+{% endif %}
+
+### 3.5 Current Energy Access
+
+The site is currently classified as **{{ site.grid_status | replace("_", " ") }}**.
+{% if site.disco_name %}The site falls within the **{{ site.disco_name }}** distribution area.{% endif %}
+{% if site.minigrid_type != "isolated" %}Minigrid type: **{{ site.minigrid_type | replace("_", " ") | title }}**.{% if site.disco_supply_hours > 0 %} Current DisCo supply: {{ site.disco_supply_hours }} hours/day.{% endif %}{% endif %}
+
+{% if site.grid_arrival_evidence.grid_extension_planned %}
+A grid extension to {{ site.site_name }} is planned by the DisCo/TCN{% if site.grid_arrival_evidence.funding_source %} with funding from {{ site.grid_arrival_evidence.funding_source }}{% endif %}.
+{% if site.grid_arrival_evidence.funding_committed %} Funding has been committed.{% else %} Funding has not yet been committed.{% endif %}
+{% if site.grid_arrival_evidence.timeline_years %} Expected timeline: {{ site.grid_arrival_evidence.timeline_years }} years.{% endif %}
+{% else %}
+There is no confirmed plan for grid extension to {{ site.site_name }}.
+{% endif %}
+
+### 3.6 Environmental & Social Context
+
+| Parameter | Value |
+|---|---|
+| IFC Category | {{ site.ifc_category }} |
+| Protected area overlap | {{ "Yes" if site.protected_area_overlap else "No" }} |
+| Flood risk | {{ site.flood_risk | title }} |
+| Biodiversity risk | {{ site.biodiversity_risk | title }} |

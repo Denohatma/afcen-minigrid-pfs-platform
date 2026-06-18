@@ -1,0 +1,67 @@
+## 12. Regulatory Framework & Grid-Arrival Risk
+
+### 12.1 Regulatory Context
+
+{{ site.site_name }} is located in {{ site.country }}, where the mini-grid regulatory framework is governed by the Nigerian Electricity Regulatory Commission (NERC). Key regulatory considerations:
+
+- **Licensing:** Mini-Grid Regulation 2023 requires registration and licensing through NERC (or state regulators under the Electricity Act 2023)
+- **Tariff regulation:** Developers can charge cost-reflective tariffs under the NERC Mini-Grid Regulation. NERC MYTO sets Band A tariff at NGN 225/kWh
+- **Grid integration:** Tripartite agreement framework (developer, DisCo, community) for interconnected minigrids. DUOS charges apply for use of DisCo infrastructure
+- **Land rights:** Site lease or community land agreement required
+- **DARES program:** World Bank US$750M program supports mini-grid development through results-based financing via the Rural Electrification Agency (REA)
+- **Embedded generation:** NERC mandates DisCos to target 10% of demand allocation through embedded generation by 2025
+
+{% if grid_arrival %}
+### 12.2 Grid Extension Evidence
+
+| Factor | Assessment |
+|---|---|
+| Grid extension planned | {{ "Yes" if site.grid_arrival_evidence.grid_extension_planned else "No" }} |
+| Funding committed | {{ "Yes" if site.grid_arrival_evidence.funding_committed else "No" }} |
+{% if site.grid_arrival_evidence.funding_source %}| Funding source | {{ site.grid_arrival_evidence.funding_source }} |{% endif %}
+| Contractor mobilised | {{ "Yes" if site.grid_arrival_evidence.contractor_mobilised else "No" }} |
+{% if site.grid_arrival_evidence.timeline_years %}| Expected timeline | {{ site.grid_arrival_evidence.timeline_years }} years |{% endif %}
+| DisCo track record | {{ site.grid_arrival_evidence.disco_track_record | title }} |
+| Recent extensions in district | {{ site.grid_arrival_evidence.recent_extensions_in_district }} |
+| **Overall assessment** | **{{ grid_arrival.evidence_summary.get("assessment", "Unknown") | title }}** |
+
+{% if site.grid_arrival_evidence.notes %}
+**Additional context:** {{ site.grid_arrival_evidence.notes }}
+{% endif %}
+
+### 12.3 ESMAP Scenario Analysis
+
+The grid-arrival risk is assessed against the seven ESMAP mini-grid transition scenarios, scored across five weighted dimensions:
+
+| Scenario | Label | Timeline (30%) | Financial (25%) | Regulatory (20%) | Complexity (15%) | Stakeholder (10%) | **Score** |
+|---|---|---|---|---|---|---|---|
+{% for s in grid_arrival.scenario_scores %}
+| {{ s.scenario | replace("_", " ") | title }} | {{ s.label }} | {{ s.timeline_certainty }} | {{ s.financial_viability }} | {{ s.regulatory_alignment }} | {{ s.implementation_complexity }} | {{ s.stakeholder_acceptability }} | **{{ s.weighted_score }}** |
+{% endfor %}
+
+### 12.4 Recommended Transition Strategy
+
+**Recommended scenario:** {{ grid_arrival.recommended_label }} (score: {{ grid_arrival.scenario_scores[0].weighted_score }}/10)
+
+{{ grid_arrival.rationale }}
+
+### 12.5 Design Implications
+
+{{ grid_arrival.design_implications }}
+
+### 12.6 Timeline Assessment
+
+{{ grid_arrival.transition_timeline }}
+
+{% if grid_arrival.warnings %}
+### Grid-Arrival Notes
+{% for w in grid_arrival.warnings %}
+- {{ w }}
+{% endfor %}
+{% endif %}
+
+{% else %}
+### 12.2 Grid-Arrival Risk
+
+[DATA GAP: Grid-arrival adapter did not produce output. {{ errors.get("grid_arrival", "Unknown error") }}. Action required: Review grid evidence fields in site data.]
+{% endif %}

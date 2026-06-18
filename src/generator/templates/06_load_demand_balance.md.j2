@@ -1,0 +1,53 @@
+## 6. Load–Generation Balance
+
+{% if sizing and demand %}
+### 6.1 Energy Balance Summary
+
+| Parameter | Value |
+|---|---|
+| Annual generation | {{ sizing.annual_generation_kwh | num }} kWh |
+| Annual demand | {{ demand.annual_demand_kwh | num }} kWh |
+| Energy served | {{ sizing.annual_energy_served_kwh | num }} kWh |
+| Generation-to-demand ratio | {{ (sizing.annual_generation_kwh / demand.annual_demand_kwh) | num(2) }}x |
+| Unmet demand | {{ sizing.unmet_demand_pct }}% |
+| Curtailment | {{ sizing.curtailment_pct }}% |
+| Capacity utilisation | {{ sizing.capacity_utilization_pct }}% |
+
+### 6.2 Dispatch Behaviour
+
+The hourly dispatch simulation models solar generation, demand serving, battery charging/discharging, and curtailment across 8,760 hours. Key behaviours:
+
+- **Daytime (08:00–16:00):** Solar generation exceeds demand. Surplus charges the battery and powers productive-use loads.
+- **Evening peak (17:00–22:00):** Battery discharges to serve the evening demand peak. System autonomy target: {{ sizing.autonomy_hours }} hours.
+- **Night (22:00–06:00):** Minimal demand served from remaining battery state of charge.
+
+### 6.3 Battery Utilisation
+
+| Parameter | Value |
+|---|---|
+| Battery capacity | {{ sizing.battery_capacity_kwh }} kWh |
+| Autonomy target | {{ sizing.autonomy_hours }} hours |
+| Estimated annual cycles | {{ sizing.battery_cycles_per_year | num }} |
+| Minimum state of charge | 20% |
+| Round-trip efficiency | 92% |
+
+### 6.4 Monthly Generation Profile
+
+| Month | Generation (kWh) |
+|---|---|
+{% set months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] %}
+{% for i in range(sizing.monthly_generation_kwh | length) %}
+| {{ months[i] }} | {{ sizing.monthly_generation_kwh[i] | num }} |
+{% endfor %}
+| **Total** | **{{ sizing.monthly_generation_kwh | sum | num }}** |
+
+{% if sizing.warnings %}
+### Load Balance Notes
+{% for w in sizing.warnings %}
+- {{ w }}
+{% endfor %}
+{% endif %}
+
+{% else %}
+[DATA GAP: Hybrid sizing or demand assessment data unavailable. Load–generation balance cannot be computed.]
+{% endif %}

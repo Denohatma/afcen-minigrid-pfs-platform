@@ -1,0 +1,43 @@
+## 9b. Environmental & Social Screening — Nigeria
+
+{% if ess %}
+### ESIA Classification
+
+| Parameter | Value |
+|---|---|
+| ESIA Category | **{{ ess.esia_category }}** |
+| Legal Framework | {{ ess.esia_framework }} |
+| Biodiversity Risk | {{ ess.biodiversity_risk | title }} |
+| Resettlement Risk | {{ ess.resettlement_risk | title }} |
+| Cultural Heritage Risk | {{ ess.cultural_heritage_risk | title }} |
+
+### Required Permits
+
+{% for permit in ess.key_permits %}
+- {{ permit }}
+{% endfor %}
+
+### Stakeholder Engagement Plan
+
+| Stakeholder | Role | Priority |
+|---|---|---|
+{% for s in ess.stakeholders %}
+| {{ s.name }} | {{ s.role }} | {{ s.engagement_priority | title }} |
+{% endfor %}
+
+### Gender Equality & Social Inclusion (GESI)
+
+{% for item in ess.gesi_considerations %}
+- {{ item }}
+{% endfor %}
+
+{% if ess.warnings %}
+### E&S Notes
+{% for w in ess.warnings %}
+- {{ w }}
+{% endfor %}
+{% endif %}
+
+{% else %}
+[DATA GAP: ESS screening engine did not produce output.]
+{% endif %}

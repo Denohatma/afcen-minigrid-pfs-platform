@@ -1,0 +1,51 @@
+## 9. Environmental & Social Screening
+
+### 9.1 IFC Performance Standards Screening
+
+The project is classified as **IFC Category {{ site.ifc_category }}** based on the nature and scale of the proposed mini-grid development.
+
+| IFC Performance Standard | Applicability | Risk Level |
+|---|---|---|
+| PS1: Assessment & Management of E&S Risks | Applicable | Moderate |
+| PS2: Labour & Working Conditions | Applicable | Low |
+| PS3: Resource Efficiency & Pollution Prevention | Applicable | Low |
+| PS4: Community Health, Safety & Security | Applicable | Low–Moderate |
+| PS5: Land Acquisition & Involuntary Resettlement | {{ "Applicable" if site.terrain == "hilly" or site.terrain == "mountainous" else "Limited applicability" }} | {{ "Moderate" if site.terrain == "hilly" or site.terrain == "mountainous" else "Low" }} |
+| PS6: Biodiversity Conservation | {{ "Applicable" if site.protected_area_overlap or site.biodiversity_risk != "low" else "Limited applicability" }} | {{ site.biodiversity_risk | title }} |
+| PS7: Indigenous Peoples | Limited applicability | Low |
+| PS8: Cultural Heritage | Limited applicability | Low |
+
+### 9.2 Environmental Risks
+
+| Risk Category | Assessment | Mitigation |
+|---|---|---|
+| Protected area overlap | {{ "Yes — requires detailed assessment" if site.protected_area_overlap else "No overlap identified" }} | {{ "Environmental impact assessment required" if site.protected_area_overlap else "Standard ESMP sufficient" }} |
+| Flood risk | {{ site.flood_risk | title }} | {{ "Raised foundations, drainage design required" if site.flood_risk != "low" else "Standard construction practices" }} |
+| Biodiversity risk | {{ site.biodiversity_risk | title }} | {{ "Biodiversity assessment required" if site.biodiversity_risk != "low" else "Standard construction practices" }} |
+| Battery disposal | Moderate (lifecycle) | Include end-of-life battery management plan in ESMP |
+
+### 9.3 Social Considerations
+
+- **Land requirements:** Approximately {{ "0.3" if sizing and sizing.pv_capacity_kwp and sizing.pv_capacity_kwp < 100 else "0.5" }}–{{ "0.5" if sizing and sizing.pv_capacity_kwp and sizing.pv_capacity_kwp < 100 else "1.0" }} hectares for PV array and powerhouse
+- **Community engagement:** Stakeholder engagement plan required prior to construction
+- **Tariff affordability:** Base tariff of ${{ site.tariff_scenarios.get("base", 0.40) }}/kWh requires willingness-to-pay validation
+- **Gender considerations:** Ensure women's participation in community energy committee
+
+### 9.4 Productive Use Environmental Considerations
+
+The introduction of mechanised and electrified productive activities (see Section 4b) may create additional environmental and social considerations:
+
+- **Noise and emissions:** Electric grain mills, welding workshops, and carpentry operations may generate noise. Siting guidance should be included in the ESMP
+- **Waste management:** Agro-processing activities (grain milling, oil pressing, fish processing) may generate organic waste requiring disposal plans
+- **Water use:** Irrigation pumping and ice-making activities require sustainable water sourcing assessments
+- **Positive impacts:** Electrification of diesel-powered activities reduces local air pollution, noise, and fuel spill risk. Carbon emission reductions from PUE switching are quantified in Section 11
+
+### 9.5 Recommended E&S Actions
+
+1. Prepare Environmental and Social Management Plan (ESMP)
+2. Conduct stakeholder engagement and community consultation
+3. Confirm land tenure and acquire necessary consents
+4. Prepare waste management plan (construction and operational phases)
+5. Include battery end-of-life management in project design
+{% if site.protected_area_overlap %}6. Commission independent Environmental Impact Assessment{% endif %}
+{% if site.flood_risk != "low" %}6. Commission detailed flood risk assessment and drainage design{% endif %}

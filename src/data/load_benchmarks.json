@@ -1,0 +1,41 @@
+{
+  "_doc": "Sector load benchmarks for Nigeria minigrid demand estimation. Source: AfCEN Build Spec, RMI/GEAPP Nigeria IMG pilot data, DARES program, EnDev, GIZ, ESMAP.",
+  "anchors": {
+    "hospital_rural": {"peak_kw_low": 15, "peak_kw_high": 50, "peak_kw_mid": 25, "load_shape": "institutional_24hr", "basis": "Rural district hospital. AKTH/LASUTH analogues scaled down"},
+    "hospital_health_centre": {"peak_kw_low": 5, "peak_kw_high": 20, "peak_kw_mid": 10, "load_shape": "institutional_24hr", "basis": "Primary health centre with cold chain and lighting"},
+    "primary_school": {"peak_kw_low": 3, "peak_kw_high": 10, "peak_kw_mid": 5, "load_shape": "institutional", "basis": "Lighting, computers, admin. EnDev Africa"},
+    "secondary_school": {"peak_kw_low": 5, "peak_kw_high": 15, "peak_kw_mid": 8, "load_shape": "institutional", "basis": "Larger campus, lab equipment, lighting"},
+    "polytechnic": {"peak_kw_low": 20, "peak_kw_high": 60, "peak_kw_mid": 35, "load_shape": "institutional", "basis": "Toto IMG serves polytechnic. Computers, workshops, lighting"},
+    "administration": {"peak_kw_low": 3, "peak_kw_high": 8, "peak_kw_mid": 5, "load_shape": "institutional", "basis": "LGA government office with lighting, fans, computers"},
+    "fish_chilling": {"peak_kw_low": 10, "peak_kw_high": 30, "peak_kw_mid": 15, "load_shape": "productive_use", "basis": "GIZ cold chain/productive use studies"},
+    "grain_mill": {"peak_kw_low": 15, "peak_kw_high": 40, "peak_kw_mid": 22, "load_shape": "productive_use", "basis": "EnDev Africa minigrid project records"},
+    "rice_cotton_processing": {"peak_kw_low": 20, "peak_kw_high": 60, "peak_kw_mid": 30, "load_shape": "productive_use", "basis": "EnDev/GIZ productive use studies"},
+    "cold_chain_dairy": {"peak_kw_low": 10, "peak_kw_high": 30, "peak_kw_mid": 15, "load_shape": "productive_use", "basis": "GIZ EnDev productive-use studies"},
+    "rice_mill_cluster": {"peak_kw_low": 15, "peak_kw_high": 35, "peak_kw_mid": 25, "load_shape": "productive_use", "basis": "EnDev Africa minigrid project records"},
+    "water_pumping": {"peak_kw_low": 5, "peak_kw_high": 20, "peak_kw_mid": 10, "load_shape": "productive_use", "basis": "FAO/GIZ irrigation electrification studies"},
+    "welding_shop": {"peak_kw_low": 3, "peak_kw_high": 8, "peak_kw_mid": 5, "load_shape": "productive_use", "basis": "Arc welder + grinder. RMI Nigeria IMG productive-use data (Toto IMG)"},
+    "cold_room": {"peak_kw_low": 5, "peak_kw_high": 15, "peak_kw_mid": 8, "load_shape": "productive_use", "basis": "Walk-in cold room for agriculture/market. Nigeria IMG pilot data"},
+    "water_packaging": {"peak_kw_low": 5, "peak_kw_high": 10, "peak_kw_mid": 7, "load_shape": "productive_use", "basis": "Pure water sachet production. Dominant PUE in Nigerian communities"},
+    "telecom_tower": {"peak_kw_low": 3, "peak_kw_high": 8, "peak_kw_mid": 5, "load_shape": "institutional_24hr", "basis": "BTS tower backup. 24hr base load"}
+  },
+  "commercial": {
+    "shop": {"peak_kw_low": 0.3, "peak_kw_high": 2.0, "peak_kw_mid": 0.8, "load_shape": "commercial", "basis": "Lighting, phone charging, fan, fridge"},
+    "bar_restaurant": {"peak_kw_low": 1.0, "peak_kw_high": 3.0, "peak_kw_mid": 1.5, "load_shape": "commercial_evening", "basis": "Lighting, music, fridge, cooking support"},
+    "barber": {"peak_kw_low": 0.3, "peak_kw_high": 1.0, "peak_kw_mid": 0.5, "load_shape": "commercial", "basis": "Clippers, lighting"},
+    "market_stall": {"peak_kw_low": 0.5, "peak_kw_high": 2.0, "peak_kw_mid": 1.0, "load_shape": "commercial", "basis": "Market stall with lighting, fan, small fridge. Nigeria market context"}
+  },
+  "residential": {
+    "improved_tier": {"peak_kw_low": 0.3, "peak_kw_high": 0.8, "peak_kw_mid": 0.5, "load_shape": "residential", "basis": "Tier 3-4: TV, fan, lighting, phone charging, small appliances"},
+    "basic_tier": {"peak_kw_low": 0.05, "peak_kw_high": 0.3, "peak_kw_mid": 0.15, "load_shape": "residential", "basis": "Tier 1-2: lighting, phone charging"}
+  },
+  "diversity_factors": {
+    "_doc": "Diversity factor by number of customers in a segment. Anchors always 1.0.",
+    "anchor": 1.0,
+    "1_to_5": 0.9,
+    "6_to_20": 0.7,
+    "21_to_50": 0.5,
+    "51_to_100": 0.4,
+    "101_to_200": 0.35,
+    "200_plus": 0.3
+  }
+}

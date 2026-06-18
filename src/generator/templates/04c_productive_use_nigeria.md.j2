@@ -1,0 +1,37 @@
+## 4c. Productive Use of Energy — Nigeria Assessment
+
+{% if productive_use %}
+### Sector Relevance Analysis
+
+The following productive use sectors have been assessed for relevance to {{ site.site_name }} in {{ site.province }} State:
+
+| # | Sector | Relevance (0-10) | Daily Demand (kWh) | Equipment | Est. Jobs |
+|---|--------|:-:|:-:|---|:-:|
+{% for s in productive_use.sectors %}
+| {{ loop.index }} | {{ s.name }} | {{ s.relevance_score | num(1) }} | {{ s.estimated_daily_kwh }} | {{ s.key_equipment | join(", ") }} | {{ s.estimated_jobs_direct + s.estimated_jobs_indirect }} |
+{% endfor %}
+
+### Top Priority Sectors
+
+{% for name in productive_use.top_3_sectors %}
+{{ loop.index }}. **{{ name }}**
+{% endfor %}
+
+### Impact Summary
+
+| Metric | Value |
+|---|---|
+| Total PUE demand | {{ productive_use.total_pue_demand_kwh_day | num(1) }} kWh/day |
+| Estimated jobs created | {{ productive_use.total_jobs }} |
+| Revenue uplift from PUE | {{ productive_use.pue_revenue_uplift_pct | num(1) }}% |
+
+{% if productive_use.warnings %}
+### Notes
+{% for w in productive_use.warnings %}
+- {{ w }}
+{% endfor %}
+{% endif %}
+
+{% else %}
+[DATA GAP: Productive use engine did not produce output.]
+{% endif %}

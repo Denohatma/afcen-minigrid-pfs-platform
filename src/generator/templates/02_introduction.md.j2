@@ -1,0 +1,47 @@
+## 2. Introduction
+
+### 2.1 Purpose
+
+This Pre-Feasibility Study (PFS) evaluates the technical, financial, and environmental viability of developing a solar hybrid mini-grid to serve the community of {{ site.site_name }} in {{ site.district }} LGA, {{ site.province }} State, {{ site.country }}. The study provides a comprehensive assessment to inform investment decisions and guide subsequent detailed feasibility work.
+
+### 2.2 Scope
+
+The PFS covers:
+
+- **Demand assessment** — Bottom-up load estimation from customer segmentation and sector benchmarks
+- **Solar resource analysis** — Based on satellite irradiance data (PVGIS-SARAH3)
+- **System design** — PV, battery storage, and inverter sizing via hourly dispatch simulation
+- **Distribution network** — Conductor sizing, bill of quantities, and cost estimation
+- **Financial model** — 25-year cashflow projection with LCOE, IRR, NPV, and DSCR analysis
+- **Carbon assessment** — Emission reduction quantification and carbon credit revenue potential
+- **Grid-arrival risk** — ESMAP scenario analysis for grid extension scenarios
+- **Productive use & value chain analysis** — Identification of value chains that can be mechanised and electrified, with business case assessment
+- **Environmental & social screening** — IFC performance standards screening
+
+### 2.3 Methodology
+
+This PFS was generated using the AfCEN Minigrid PFS Platform (v{{ platform_version }}), which applies a modular adapter-based computational pipeline:
+
+1. **Site data ingestion** — Structured site data including customer segmentation, geographic coordinates, and financial assumptions
+2. **Adapter execution** — Seven computational adapters executed in dependency order (demand → solar → sizing → distribution → carbon → financial → grid-arrival)
+3. **Template rendering** — Results assembled into this document from standardised section templates
+
+Data sources include:
+- PVGIS v5.3 satellite irradiance database (SARAH3, 2005–2023 average)
+- Sector demand benchmarks from Sub-Saharan African mini-grid deployments
+- Unit cost benchmarks from recent rural electrification projects in {{ site.country }}
+{% if site.existing_pfs and site.existing_pfs.pv_capacity_kwp %}
+- Calibration reference from existing {{ site.site_name }} PFS ({{ site.existing_pfs.pv_capacity_kwp }} kWp system)
+{% endif %}
+
+### 2.4 Productive Use of Energy
+
+A core objective of this PFS is to identify local value chains that can be mechanised and electrified to unlock economic value. Productive Use of Energy (PUE) is recognised as a critical success factor for mini-grid sustainability — it increases revenue through higher electricity consumption, improves load factor by stimulating daytime demand, and strengthens communities' ability to pay for electricity through income generation. Section 4b presents a dedicated analysis of PUE opportunities, including business cases, pre-condition assessments, and prioritised recommendations.
+
+### 2.5 Limitations
+
+- Demand estimates are based on sector benchmarks, not site-specific survey data. Actual demand may vary.
+- Solar resource data is satellite-derived; ground measurements would improve accuracy for detailed design.
+- Distribution network design uses simplified routing algorithms; detailed engineering survey required for construction.
+- Financial projections are indicative and subject to market conditions, procurement outcomes, and regulatory changes.
+- This PFS does not constitute an investment recommendation. A full feasibility study with site survey data is required before commitment of capital.

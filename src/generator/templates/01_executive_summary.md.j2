@@ -1,0 +1,90 @@
+# Pre-Feasibility Study: {{ site.site_name }} Solar Hybrid Mini-Grid
+
+**{{ site.district }} LGA, {{ site.province }} State, {{ site.country }}**
+**Date:** {{ generation_date }}
+{% if site.developer %}**Developer:** {{ site.developer }}{% endif %}
+**Platform Version:** {{ platform_version }}
+
+---
+
+## 1. Executive Summary
+
+This pre-feasibility study (PFS) assesses the viability of a solar hybrid mini-grid to serve the community of **{{ site.site_name }}** in {{ site.district }} LGA, {{ site.province }} State, {{ site.country }}.
+
+### Site Snapshot
+
+| Parameter | Value |
+|---|---|
+| Population | {{ site.population | num }} |
+| Mapped structures | {{ site.mapped_structures | num }} |
+| Total customers | {{ site.total_customers | num }} |
+| Coordinates | {{ site.lat }}, {{ site.lon }} |
+| Grid status | {{ site.grid_status | replace("_", " ") | title }} |
+{% if site.terrain %}| Terrain | {{ site.terrain | title }} |{% endif %}
+
+### Headline Metrics
+
+{% if sizing %}
+| Metric | Value |
+|---|---|
+| PV capacity | {{ sizing.pv_capacity_kwp }} kWp |
+| Battery storage | {{ sizing.battery_capacity_kwh }} kWh |
+| Inverter capacity | {{ sizing.inverter_capacity_kwac }} kWac |
+{% if demand %}| Peak demand | {{ demand.peak_load_kw | num(1) }} kW |{% endif %}
+{% if demand %}| Annual demand | {{ demand.annual_demand_kwh | num }} kWh |{% endif %}
+| Annual generation | {{ sizing.annual_generation_kwh | num }} kWh |
+{% if financial %}| Total CAPEX | {{ financial.total_capex_usd | usd }} |{% endif %}
+{% if financial %}| CAPEX per Wp | ${{ financial.capex_per_wp }} |{% endif %}
+{% if financial %}| LCOE | ${{ financial.lcoe_usd_kwh }}/kWh |{% endif %}
+{% if financial %}| Project IRR | {{ (financial.project_irr * 100) | num(1) }}% |{% endif %}
+{% if financial %}| Equity IRR | {{ (financial.equity_irr * 100) | num(1) }}% |{% endif %}
+{% if financial %}| NPV (@ 10%) | {{ financial.npv_at_10pct | usd }} |{% endif %}
+{% if financial %}| Simple payback | {{ financial.simple_payback_years }} years |{% endif %}
+{% if financial %}| Subsidy required | {{ financial.subsidy_required_usd | usd }} ({{ financial.subsidy_pct_capex }}% of CAPEX) |{% endif %}
+{% if carbon %}| CO₂ reductions | {{ carbon.annual_emission_reductions_tco2e }} tCO₂e/year |{% endif %}
+{% if distribution %}| Distribution cost | {{ distribution.total_network_cost_usd | usd }} |{% endif %}
+{% if distribution %}| Cost per connection | {{ distribution.cost_per_connection_usd | usd }} |{% endif %}
+{% else %}
+[DATA GAP: Hybrid sizing adapter did not produce output. System design metrics unavailable.]
+{% endif %}
+
+### Recommendation: **{{ recommendation }}**
+
+{% if recommendation == "Go" %}
+The project demonstrates strong financial viability under the base-case tariff scenario with an IRR of {{ (financial.project_irr * 100) | num(1) }}% and a subsidy requirement of {{ financial.subsidy_pct_capex }}% of CAPEX. The project is recommended to proceed to full feasibility study and detailed engineering design.
+{% elif recommendation == "Conditional Go" %}
+The project shows potential viability but requires attention to key conditions before proceeding. {% if financial %}The project IRR of {{ (financial.project_irr * 100) | num(1) }}% under the base case {% if financial.project_irr < 0.08 %}is below the 8% threshold for unconditional recommendation{% endif %}.{% endif %} A full feasibility study should address the conditions identified in Section 15.
+{% elif recommendation == "Redesign" %}
+The current system configuration does not meet minimum financial viability thresholds. However, the underlying demand fundamentals support consideration of an alternative design. See Section 15 for redesign recommendations.
+{% elif recommendation == "No-Go" %}
+Critical constraints have been identified that prevent the project from proceeding in its current form. See Section 15 for details.
+{% else %}
+Insufficient data was available to generate a definitive recommendation. The following adapter errors occurred:
+{% for name, error in errors.items() %}
+- **{{ name }}**: {{ error }}
+{% endfor %}
+{% endif %}
+
+### Productive Use & Value Chain Potential
+
+{% set pue_anchors = [] %}
+{% for a in site.anchors %}
+{% if a.load_type in ["grain_mill", "fish_chilling", "rice_processing", "cotton_processing", "irrigation_pump", "cold_storage", "oil_press", "welding", "carpentry", "tailoring", "bakery", "ice_making", "water_pump"] %}
+{% set _ = pue_anchors.append(a) %}
+{% endif %}
+{% endfor %}
+{% if pue_anchors %}
+The study identifies **{{ pue_anchors | length }} productive-use anchor load(s)** with potential for mechanisation and electrification:
+{% for a in pue_anchors %}
+- {{ a.name }} ({{ a.load_type | replace("_", " ") | title }})
+{% endfor %}
+These value chains present opportunities to increase daytime demand, improve load factor, and generate local economic value. A detailed analysis of electrification pathways, business cases, and financing strategies is provided in **Section 4b**.
+{% else %}
+Several value chains in the {{ site.site_name }} area have potential for mechanisation and electrification, including grain processing, cold storage, and light manufacturing. Stimulating productive use of energy will be critical to improving the project's load factor and financial sustainability. See **Section 4b** for the full Value Chain & Productive Use Analysis.
+{% endif %}
+
+{% if grid_arrival %}
+### Grid-Arrival Assessment
+
+{{ grid_arrival.evidence_summary.get("assessment", "Unknown") | title }} — Recommended strategy: **{{ grid_arrival.recommended_label }}**.
+{% endif %}

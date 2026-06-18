@@ -1,0 +1,41 @@
+## 11b. Climate Rationale — Nigeria
+
+{% if climate %}
+### NDC Alignment
+
+{{ climate.ndc_alignment }}
+
+{{ climate.emission_reduction_contribution }}
+
+### Climate Hazard Assessment
+
+| Hazard | Risk Level | Description |
+|---|---|---|
+{% for h in climate.climate_hazards %}
+| {{ h.hazard_type | replace("_", " ") | title }} | {{ h.risk_level | title }} | {{ h.description }} |
+{% endfor %}
+
+### Adaptation Measures
+
+{% for h in climate.climate_hazards %}
+{% if h.adaptation_measures %}
+**{{ h.hazard_type | replace("_", " ") | title }}:**
+{% for m in h.adaptation_measures %}
+- {{ m }}
+{% endfor %}
+{% endif %}
+{% endfor %}
+
+### Climate Finance Eligibility
+
+{% for fund in climate.climate_finance_eligibility %}
+- {{ fund }}
+{% endfor %}
+
+| Metric | Value |
+|---|---|
+| Adaptation Score | {{ climate.adaptation_score | num(1) }}/10 |
+
+{% else %}
+[DATA GAP: Climate assessment engine did not produce output.]
+{% endif %}
