@@ -458,3 +458,133 @@ class AuditLog(Base):
     details = Column(JSON, default=dict)
     ip_address = Column(String(50), default="")
     created_at = Column(DateTime, default=utcnow)
+
+
+# --- Module 8: Community Grievance Mechanism ---
+
+class Grievance(Base):
+    __tablename__ = "grievances"
+
+    id = Column(String, primary_key=True, default=new_uuid)
+    site_id = Column(String, ForeignKey("sites.id"), nullable=True)
+    site_name_text = Column(String(200), default="")
+    submitter_name = Column(String(200), nullable=True)
+    submitter_contact = Column(String(300), nullable=True)
+    submitter_type = Column(String(30), default="community_member")  # community_member, worker, local_government, ngo, other
+    category = Column(String(30), default="other")  # land_resettlement, environmental, worker_safety, service_quality, other
+    description = Column(Text, nullable=False)
+    location_description = Column(Text, default="")
+    is_anonymous = Column(Boolean, default=False)
+    status = Column(String(30), default="received")  # received, acknowledged, under_investigation, resolved, escalated, closed
+    assigned_developer_id = Column(String, ForeignKey("developer_registrations.id"), nullable=True)
+    developer_response = Column(Text, nullable=True)
+    resolution_notes = Column(Text, nullable=True)
+    escalated_at = Column(DateTime, nullable=True)
+    resolved_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+
+    comments = relationship("GrievanceComment", back_populates="grievance", cascade="all, delete-orphan")
+
+
+class GrievanceComment(Base):
+    __tablename__ = "grievance_comments"
+
+    id = Column(String, primary_key=True, default=new_uuid)
+    grievance_id = Column(String, ForeignKey("grievances.id"), nullable=False)
+    author_role = Column(Text, default="")
+    comment_text = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=utcnow)
+
+    grievance = relationship("Grievance", back_populates="comments")
+
+
+# --- Module 9: GPS Remote Verification ---
+
+class GPSPhoto(Base):
+    __tablename__ = "gps_photos"
+
+    id = Column(String, primary_key=True, default=new_uuid)
+    milestone_id = Column(String, ForeignKey("milestones.id"), nullable=False)
+    photo_filename = Column(String(300), default="")
+    storage_key = Column(String(500), default="")
+    latitude = Column(Float, nullable=False)
+    longitude = Column(Float, nullable=False)
+    altitude = Column(Float, nullable=True)
+    accuracy_meters = Column(Float, default=0.0)
+    device_id = Column(String(200), default="")
+    captured_at = Column(DateTime, nullable=False)
+    uploaded_at = Column(DateTime, default=utcnow)
+    distance_from_site_km = Column(Float, default=0.0)
+    coordinate_check = Column(String(10), default="pass")  # pass, amber, red
+    timestamp_check = Column(String(10), default="pass")  # pass, amber, red
+    duplicate_check = Column(String(10), default="pass")  # pass, amber, red
+    overall_status = Column(String(10), default="pass")  # pass, amber, red
+    reviewer_notes = Column(Text, nullable=True)
+
+
+class IVAVisit(Base):
+    __tablename__ = "iva_visits"
+
+    id = Column(String, primary_key=True, default=new_uuid)
+    site_id = Column(String, ForeignKey("sites.id"), nullable=False)
+    milestone_id = Column(String, ForeignKey("milestones.id"), nullable=False)
+    trigger_reason = Column(String(30), default="auto_flag")  # auto_flag, random_sample, grievance_linked
+    iva_name = Column(String(200), default="")
+    scheduled_date = Column(DateTime, nullable=True)
+    completed_date = Column(DateTime, nullable=True)
+    status = Column(String(20), default="pending")  # pending, scheduled, completed, waived
+    field_report_key = Column(String(500), nullable=True)
+    verification_result = Column(String(20), nullable=True)  # confirmed, issues_found, failed
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=utcnow)
+
+
+# --- Module 10: ESG & Impact Reporting ---
+
+class ESGReport(Base):
+    __tablename__ = "esg_reports"
+
+    id = Column(String, primary_key=True, default=new_uuid)
+    report_type = Column(String(30), nullable=False)  # dares_quarterly, investor_esg, carbon_data
+    title = Column(String(300), default="")
+    scope_type = Column(String(20), default="all")  # all, disco, developer, lot, site
+    scope_id = Column(String, nullable=True)
+    period_start = Column(DateTime, nullable=False)
+    period_end = Column(DateTime, nullable=False)
+    generated_at = Column(DateTime, default=utcnow)
+    generated_by = Column(String(200), default="")
+    data_snapshot = Column(JSON, default=dict)
+    status = Column(String(20), default="draft")  # draft, final, locked
+    created_at = Column(DateTime, default=utcnow)
+
+
+class GESIMetric(Base):
+    __tablename__ = "gesi_metrics"
+
+    id = Column(String, primary_key=True, default=new_uuid)
+    site_id = Column(String, ForeignKey("sites.id"), nullable=False)
+    period = Column(DateTime, nullable=False)
+    female_connections_pct = Column(Float, default=0.0)
+    female_headed_hh_pct = Column(Float, default=0.0)
+    women_employed_construction = Column(Integer, default=0)
+    women_employed_operations = Column(Integer, default=0)
+    youth_employed = Column(Integer, default=0)
+    disability_accessible_facilities = Column(Integer, default=0)
+    community_meetings_held = Column(Integer, default=0)
+    grievances_from_women = Column(Integer, default=0)
+    created_at = Column(DateTime, default=utcnow)
+
+
+class CarbonCreditTracking(Base):
+    __tablename__ = "carbon_credit_tracking"
+
+    id = Column(String, primary_key=True, default=new_uuid)
+    site_id = Column(String, ForeignKey("sites.id"), nullable=False)
+    methodology = Column(String(30), default="gold_standard")  # gold_standard, verra, other
+    annual_tco2e_avoided = Column(Float, default=0.0)
+    credit_status = Column(String(30), default="not_applied")  # not_applied, application_submitted, validation_complete, credits_issued, credits_sold
+    credits_issued_count = Column(Integer, nullable=True)
+    revenue_usd = Column(Float, nullable=True)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+    created_at = Column(DateTime, default=utcnow)

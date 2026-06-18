@@ -13,6 +13,9 @@ const NAV_ITEMS = [
   { href: "/disbursements", label: "Disbursements" },
   { href: "/monitoring", label: "Monitoring" },
   { href: "/developers", label: "Developers" },
+  { href: "/grievances", label: "Grievances" },
+  { href: "/gps-verification", label: "GPS Verify" },
+  { href: "/reports", label: "Reports" },
 ];
 
 export function Navbar() {

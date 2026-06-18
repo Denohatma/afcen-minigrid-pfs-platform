@@ -17,6 +17,7 @@ from app.db.session import engine, Base, async_session
 from app.db.models import PipelineRun
 from app.api.routes import sites, runs, documents, settlements, portfolios
 from app.api.routes import developers, evaluations, disbursements, monitoring, banking
+from app.api.routes import grievances, gps_verification, reports
 
 logging.basicConfig(
     level=logging.INFO,
@@ -99,6 +100,9 @@ app.include_router(evaluations.router, prefix="/api/v1", tags=["evaluations"])
 app.include_router(disbursements.router, prefix="/api/v1", tags=["disbursements"])
 app.include_router(monitoring.router, prefix="/api/v1", tags=["monitoring"])
 app.include_router(banking.router, prefix="/api/v1", tags=["banking"])
+app.include_router(grievances.router, prefix="/api/v1", tags=["grievances"])
+app.include_router(gps_verification.router, prefix="/api/v1", tags=["gps-verification"])
+app.include_router(reports.router, prefix="/api/v1", tags=["reports"])
 
 
 @app.get("/health")

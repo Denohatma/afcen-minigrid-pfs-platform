@@ -21,6 +21,16 @@ import type {
   MonitoringDashboard,
   BankOfferData,
   InvestmentSummary,
+  Grievance,
+  GrievanceComment,
+  GrievanceReport,
+  GPSPhoto,
+  GPSVerificationSummary,
+  IVAVisit,
+  ESGReport,
+  GESIMetric,
+  CarbonCredit,
+  BenchmarkData,
 } from "./types";
 
 const API_BASE = "/api/proxy";
@@ -170,5 +180,52 @@ export const api = {
     },
     expressInterest: (id: string) => request<{ ok: boolean }>(`/banking/offers/${id}/interest`, { method: "PUT" }),
     investmentSummary: (portfolioId: string) => request<InvestmentSummary>(`/banking/investment-summary/${portfolioId}`),
+  },
+
+  grievances: {
+    list: (params?: Record<string, string>) => {
+      const qs = params ? "?" + new URLSearchParams(params).toString() : "";
+      return request<{ grievances: Grievance[] }>(`/grievances${qs}`);
+    },
+    get: (id: string) => request<Grievance>(`/grievances/${id}`),
+    submit: (data: { site_name_text?: string; submitter_name?: string; submitter_contact?: string; submitter_type: string; category: string; description: string; location_description?: string; is_anonymous: boolean }) =>
+      request<{ id: string }>("/grievances", { method: "POST", body: JSON.stringify(data) }),
+    acknowledge: (id: string) => request<{ ok: boolean }>(`/grievances/${id}/acknowledge`, { method: "PUT" }),
+    assign: (id: string, developerId: string) => request<{ ok: boolean }>(`/grievances/${id}/assign`, { method: "PUT", body: JSON.stringify({ developer_id: developerId }) }),
+    respond: (id: string, response: string) => request<{ ok: boolean }>(`/grievances/${id}/respond`, { method: "PUT", body: JSON.stringify({ response }) }),
+    resolve: (id: string, notes: string) => request<{ ok: boolean }>(`/grievances/${id}/resolve`, { method: "PUT", body: JSON.stringify({ resolution_notes: notes }) }),
+    escalate: (id: string) => request<{ ok: boolean }>(`/grievances/${id}/escalate`, { method: "PUT" }),
+    addComment: (id: string, comment: { author_role: string; comment_text: string }) => request<{ id: string }>(`/grievances/${id}/comments`, { method: "POST", body: JSON.stringify(comment) }),
+    getReport: (params?: Record<string, string>) => {
+      const qs = params ? "?" + new URLSearchParams(params).toString() : "";
+      return request<GrievanceReport>(`/grievances/report${qs}`);
+    },
+  },
+
+  gpsVerification: {
+    uploadPhoto: (data: { milestone_id: string; latitude: number; longitude: number; accuracy_meters: number; device_id: string; captured_at: string }) =>
+      request<{ id: string }>("/gps-verification/photos", { method: "POST", body: JSON.stringify(data) }),
+    getMilestonePhotos: (milestoneId: string) => request<GPSVerificationSummary>(`/gps-verification/milestone/${milestoneId}`),
+    reviewPhoto: (photoId: string, data: { status: string; notes: string }) =>
+      request<{ ok: boolean }>(`/gps-verification/photos/${photoId}/review`, { method: "PUT", body: JSON.stringify(data) }),
+    approveMilestone: (milestoneId: string) => request<{ ok: boolean }>(`/gps-verification/milestone/${milestoneId}/approve`, { method: "POST" }),
+    flagForIVA: (milestoneId: string) => request<{ ok: boolean }>(`/gps-verification/milestone/${milestoneId}/flag-iva`, { method: "POST" }),
+    listIVAVisits: () => request<{ visits: IVAVisit[] }>("/gps-verification/iva-visits"),
+    updateIVAVisit: (id: string, data: { status: string; verification_result?: string; notes?: string }) =>
+      request<{ ok: boolean }>(`/gps-verification/iva-visits/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+  },
+
+  reports: {
+    generate: (data: { report_type: string; title: string; scope_type: string; scope_id?: string; period_start: string; period_end: string }) =>
+      request<{ id: string }>("/reports/generate", { method: "POST", body: JSON.stringify(data) }),
+    list: () => request<{ reports: ESGReport[] }>("/reports"),
+    get: (id: string) => request<ESGReport>(`/reports/${id}`),
+    lock: (id: string) => request<{ ok: boolean }>(`/reports/${id}/lock`, { method: "PUT" }),
+    delete: (id: string) => request<void>(`/reports/${id}`, { method: "DELETE" }),
+    submitGESI: (data: Omit<GESIMetric, "id">) => request<{ id: string }>("/reports/gesi", { method: "POST", body: JSON.stringify(data) }),
+    getGESI: (siteId: string) => request<{ metrics: GESIMetric[] }>(`/reports/gesi/${siteId}`),
+    updateCarbon: (data: Omit<CarbonCredit, "id">) => request<{ id: string }>("/reports/carbon", { method: "POST", body: JSON.stringify(data) }),
+    getCarbon: (siteId: string) => request<{ credits: CarbonCredit[] }>(`/reports/carbon/${siteId}`),
+    getBenchmarks: () => request<BenchmarkData>("/reports/benchmarks"),
   },
 };

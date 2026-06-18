@@ -420,3 +420,134 @@ export interface InvestmentSummary {
   total_co2_displaced: number;
   sites: Array<{ name: string; capacity_kwp: number; connections: number; irr: number; lcoe: number }>;
 }
+
+// Grievances (Module 8)
+export interface Grievance {
+  id: string;
+  site_id: string | null;
+  site_name_text: string | null;
+  submitter_name: string | null;
+  submitter_contact: string | null;
+  submitter_type: string;
+  category: string;
+  description: string;
+  location_description: string | null;
+  is_anonymous: boolean;
+  status: string;
+  assigned_developer_id: string | null;
+  developer_response: string | null;
+  resolution_notes: string | null;
+  escalated_at: string | null;
+  resolved_at: string | null;
+  created_at: string;
+  updated_at: string;
+  comments?: GrievanceComment[];
+}
+
+export interface GrievanceComment {
+  id: string;
+  grievance_id: string;
+  author_role: string;
+  comment_text: string;
+  created_at: string;
+}
+
+export interface GrievanceReport {
+  total: number;
+  by_category: Record<string, number>;
+  by_status: Record<string, number>;
+  avg_resolution_days: number | null;
+  anonymous_count: number;
+  escalated_count: number;
+}
+
+// GPS Verification (Module 9)
+export interface GPSPhoto {
+  id: string;
+  milestone_id: string;
+  photo_filename: string;
+  latitude: number;
+  longitude: number;
+  accuracy_meters: number;
+  device_id: string;
+  captured_at: string;
+  distance_from_site_km: number;
+  coordinate_check: string;
+  timestamp_check: string;
+  duplicate_check: string;
+  overall_status: string;
+  reviewer_notes: string | null;
+}
+
+export interface GPSVerificationSummary {
+  milestone_id: string;
+  photos: GPSPhoto[];
+  total_photos: number;
+  passing: number;
+  amber: number;
+  red: number;
+  can_approve: boolean;
+}
+
+export interface IVAVisit {
+  id: string;
+  site_id: string;
+  milestone_id: string;
+  trigger_reason: string;
+  iva_name: string;
+  status: string;
+  verification_result: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
+// ESG & Impact Reporting (Module 10)
+export interface ESGReport {
+  id: string;
+  report_type: string;
+  title: string;
+  scope_type: string;
+  scope_id: string | null;
+  period_start: string;
+  period_end: string;
+  generated_at: string;
+  generated_by: string;
+  data_snapshot: Record<string, unknown>;
+  status: string;
+}
+
+export interface GESIMetric {
+  id: string;
+  site_id: string;
+  period: string;
+  female_connections_pct: number;
+  female_headed_hh_pct: number;
+  women_employed_construction: number;
+  women_employed_operations: number;
+  youth_employed: number;
+  disability_accessible_facilities: number;
+  community_meetings_held: number;
+  grievances_from_women: number;
+}
+
+export interface CarbonCredit {
+  id: string;
+  site_id: string;
+  methodology: string;
+  annual_tco2e_avoided: number;
+  credit_status: string;
+  credits_issued_count: number | null;
+  revenue_usd: number | null;
+}
+
+export interface BenchmarkData {
+  total_sites: number;
+  avg_system_availability_pct: number;
+  avg_collection_rate_pct: number;
+  avg_renewable_fraction_pct: number;
+  avg_connections_per_site: number;
+  total_connections: number;
+  total_pue_connections: number;
+  total_generation_kwh: number;
+  avg_supply_hours: number;
+}
