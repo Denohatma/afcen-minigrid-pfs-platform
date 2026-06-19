@@ -221,6 +221,8 @@ def _lot_dict(lot: Lot, *, include_sites: bool = False) -> dict:
             "nda_required": dr.nda_required,
             "created_at": str(dr.created_at) if dr.created_at else None,
         } if dr else None
+        t = getattr(lot, "tender", None)
+        out["tender"] = _tender_dict(t) if t else None
     return out
 
 
@@ -335,7 +337,7 @@ async def get_lot(
     """Get lot with sites and data room status."""
     result = await db.execute(
         select(Lot)
-        .options(selectinload(Lot.sites), selectinload(Lot.data_room))
+        .options(selectinload(Lot.sites), selectinload(Lot.data_room), selectinload(Lot.tender))
         .where(Lot.id == lot_id)
     )
     lot = result.scalar_one_or_none()

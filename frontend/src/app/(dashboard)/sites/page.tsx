@@ -87,7 +87,7 @@ export default function SitesPage() {
   const settlements = data?.settlements ?? [];
   const total = data?.total ?? 0;
   const totalPages = Math.ceil(total / pageSize);
-  const assessedSites: Array<Record<string, any>> = (sitesData?.sites ?? []) as any;
+  const assessedSites: Array<Record<string, any>> = (sitesData?.items ?? []) as any;
 
   const toggleSelect = (rank: number) => {
     setSelectedRanks((prev) => {

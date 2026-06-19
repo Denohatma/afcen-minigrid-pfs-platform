@@ -68,7 +68,7 @@ export const api = {
   // ── Module 1: Site Registry ─────────────────────────────────────
   siteRegistry: {
     list: (params?: Record<string, string | number>) =>
-      request<{ sites: SiteRegistry[]; total: number }>(`/site-registry/sites${qs(params)}`),
+      request<{ items: SiteRegistry[]; total: number }>(`/site-registry/sites${qs(params)}`),
     get: (id: string) => request<SiteRegistry>(`/site-registry/sites/${id}`),
     create: (data: Partial<SiteRegistry>) =>
       request<SiteRegistry>("/site-registry/sites", { method: "POST", body: JSON.stringify(data) }),
