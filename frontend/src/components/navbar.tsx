@@ -7,15 +7,14 @@ import { usePathname } from "next/navigation";
 
 const NAV_ITEMS = [
   { href: "/sites", label: "Site Registry", shortLabel: "Sites" },
-  { href: "/portfolios", label: "Portfolios" },
-  { href: "/tenders", label: "Tenders" },
-  { href: "/evaluations", label: "Evaluations" },
-  { href: "/disbursements", label: "Disbursements" },
-  { href: "/monitoring", label: "Monitoring" },
-  { href: "/developers", label: "Developers" },
-  { href: "/grievances", label: "Grievances" },
-  { href: "/gps-verification", label: "GPS Verify" },
-  { href: "/reports", label: "Reports" },
+  { href: "/disco-readiness", label: "DisCo Readiness", shortLabel: "DisCo" },
+  { href: "/lots", label: "Lots & Tenders", shortLabel: "Tenders" },
+  { href: "/evaluations", label: "Evaluations", shortLabel: "Eval" },
+  { href: "/agreements", label: "Agreements", shortLabel: "Agreements" },
+  { href: "/disbursements", label: "Disbursements", shortLabel: "Disburse" },
+  { href: "/grievances", label: "E&S / GRM", shortLabel: "GRM" },
+  { href: "/settlement-ledger", label: "Settlement", shortLabel: "Settle" },
+  { href: "/performance", label: "Performance", shortLabel: "M&E" },
 ];
 
 export function Navbar() {
@@ -35,7 +34,7 @@ export function Navbar() {
               className="h-9 w-9"
             />
             <span className="font-heading text-lg font-bold text-foreground">
-              InvestIQ:<span className="font-semibold text-muted-foreground"> IMG Nigeria</span>
+              InvestIQ:<span className="font-semibold text-muted-foreground"> DARES IMG</span>
             </span>
           </Link>
           <nav className="hidden items-center gap-1 text-sm lg:flex">
@@ -43,7 +42,7 @@ export function Navbar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`rounded-md px-3 py-2 font-medium transition-colors ${
+                className={`rounded-md px-2.5 py-2 font-medium transition-colors ${
                   pathname.startsWith(item.href)
                     ? "bg-primary/10 text-primary"
                     : "text-muted-foreground hover:text-primary hover:bg-accent"

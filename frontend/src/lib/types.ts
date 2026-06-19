@@ -1,143 +1,4 @@
-export interface SiteResponse {
-  id: string;
-  org_id: string;
-  site_name: string;
-  district: string;
-  country: string;
-  status: string;
-  site_data: SiteData;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface SiteListResponse {
-  sites: SiteResponse[];
-  total: number;
-}
-
-export interface RunResponse {
-  id: string;
-  site_id: string;
-  status: string;
-  adapter_timings: Record<string, number> | null;
-  adapter_errors: Record<string, string> | null;
-  summary_metrics: SummaryMetrics | null;
-  started_at: string | null;
-  completed_at: string | null;
-}
-
-export interface RunListResponse {
-  runs: RunResponse[];
-  total: number;
-}
-
-export interface AdapterResultResponse {
-  adapter_name: string;
-  status: string;
-  duration_seconds: number | null;
-}
-
-export interface RunDetailResponse extends RunResponse {
-  adapter_results: AdapterResultResponse[];
-}
-
-export interface DocumentResponse {
-  id: string;
-  run_id: string;
-  format: string;
-  filename: string;
-  size_bytes: number;
-  created_at: string;
-}
-
-export interface DocumentDownloadResponse {
-  download_url: string;
-  filename: string;
-  expires_in_seconds: number;
-}
-
-export interface SummaryMetrics {
-  pv_capacity_kwp?: number | null;
-  battery_capacity_kwh?: number | null;
-  total_capex_usd?: number | null;
-  lcoe_usd_kwh?: number | null;
-  base_irr?: number | null;
-}
-
-export interface CustomerSegment {
-  category: string;
-  sub_type: string;
-  count: number;
-  tier: string;
-  estimated_load_kw: number | null;
-  operating_hours: string;
-}
-
-export interface AnchorLoad {
-  load_type: string;
-  name: string;
-  count: number;
-  estimated_load_kw: number | null;
-  operating_hours: string;
-  load_shape: string;
-}
-
-export interface TariffScenarios {
-  low: number;
-  base: number;
-  high: number;
-}
-
-export interface FinancingStructure {
-  grant_pct: number;
-  debt_pct: number;
-  equity_pct: number;
-}
-
-export interface SiteData {
-  site_name: string;
-  district: string;
-  province: string;
-  country: string;
-  coordinates: [number, number];
-  developer: string;
-  disco_name: string;
-  minigrid_type: string;
-  disco_supply_hours: number;
-  population: number;
-  mapped_structures: number;
-  settlement_radius_m: number;
-  customers: CustomerSegment[];
-  anchors: AnchorLoad[];
-  grid_status: string;
-  grid_arrival_evidence: Record<string, unknown>;
-  tariff_scenarios: TariffScenarios;
-  discount_rate: number;
-  inflation_rate: number;
-  fx_rate_ngn_usd: number;
-  financing_structure: FinancingStructure;
-  debt_interest_rate: number;
-  debt_tenor_years: number;
-  protected_area_overlap: boolean;
-  flood_risk: string;
-  biodiversity_risk: string;
-  ifc_category: string;
-  terrain: string;
-  economic_activities: string[];
-  social_services: string[];
-  access_description: string;
-  existing_pfs: Record<string, unknown>;
-}
-
-export interface SSEEvent {
-  event: string;
-  run_id?: string;
-  adapter?: string;
-  status?: string;
-  duration?: number;
-  error?: string | null;
-  message?: string;
-}
+// ── Settlement Data (from JSON) ─────────────────────────────────────
 
 export interface SettlementData {
   rank: number;
@@ -162,43 +23,6 @@ export interface SettlementData {
   score: number;
 }
 
-export interface PortfolioSite {
-  id: string;
-  settlement_rank: number;
-  settlement_data: SettlementData;
-  pipeline_status: string;
-  results: Record<string, Record<string, unknown>>;
-  arpu: number;
-}
-
-export interface Portfolio {
-  id: string;
-  name: string;
-  disco_name: string;
-  status: string;
-  filters: Record<string, unknown>;
-  sites: PortfolioSite[];
-  tender: { id: string; status: string; launched_at: string | null; deadline: string | null } | null;
-  created_at: string;
-}
-
-export interface PortfolioResults {
-  portfolio_id: string;
-  portfolio_name: string;
-  disco_name: string;
-  sites_completed: number;
-  total_capex_usd: number;
-  total_connections: number;
-  total_pv_kwp: number;
-  total_pv_mwp: number;
-  total_battery_kwh: number;
-  total_battery_mwh: number;
-  total_grant_usd: number;
-  avg_grant_per_connection: number;
-  avg_lcoe: number;
-  avg_irr: number;
-}
-
 export interface SettlementStats {
   total_settlements: number;
   by_disco: Record<string, {
@@ -212,259 +36,348 @@ export interface SettlementStats {
   }>;
 }
 
-// Developer Registration
-export interface DeveloperRegistration {
+// ── Module 1: Site Registry ─────────────────────────────────────────
+
+export interface SiteRegistry {
+  id: string;
+  program_id: string | null;
+  disco: string;
+  feeder_name: string;
+  band: string;
+  community: string;
+  state: string;
+  lga: string;
+  latitude: number | null;
+  longitude: number | null;
+  population: number;
+  customers: number;
+  supply_hours: number;
+  demand_kwh: number;
+  genset_proxy: boolean;
+  grid_dist_km: number;
+  security_risk: string;
+  data_quality_score: number;
+  status: string;
+  source_data: Record<string, unknown>;
+  settlement_rank: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Program {
+  id: string;
+  name: string;
+  scheme_type: string;
+  funding_source: string;
+  grant_envelope_usd: number;
+  implementing_agency: string;
+  status: string;
+  config: Record<string, unknown>;
+  created_at: string;
+}
+
+// ── Module 3: DisCo Readiness ───────────────────────────────────────
+
+export interface DiscoReadiness {
+  id: string;
+  site_id: string;
+  feeder_data_status: string;
+  poi_status: string;
+  bulk_meter_status: string;
+  customer_data_status: string;
+  settlement_terms_status: string;
+  tripartite_status: string;
+  feeder_data: Record<string, unknown>;
+  poi_data: Record<string, unknown>;
+  bulk_meter_data: Record<string, unknown>;
+  customer_data: Record<string, unknown>;
+  settlement_terms: Record<string, unknown>;
+  validated_by: string | null;
+  validated_at: string | null;
+  overall_status: string;
+  notes: string;
+  updated_at: string;
+}
+
+export interface InterconnectionRequirement {
+  id: string;
+  site_id: string;
+  voltage_level: string;
+  protection_scheme: string;
+  islanding_mode: string;
+  sync_requirements: string;
+  nemsa_status: string;
+  responsibilities: Record<string, unknown>;
+  created_at: string;
+}
+
+// ── Module 5: Lots, Data Rooms, Tenders ─────────────────────────────
+
+export interface Lot {
+  id: string;
+  program_id: string | null;
+  lot_name: string;
+  disco: string;
+  state: string;
+  grant_ceiling_pct: number;
+  grant_ceiling_usd: number;
+  evaluation_method: string;
+  data_room_status: string;
+  tender_status: string;
+  approval_to_tender: boolean;
+  site_count: number;
+  total_connections: number;
+  created_at: string;
+  updated_at: string;
+  sites?: LotSite[];
+  data_room?: DataRoom | null;
+  tender?: Tender | null;
+}
+
+export interface LotSite {
+  id: string;
+  lot_id: string;
+  site_id: string;
+  settlement_rank: number | null;
+}
+
+export interface DataRoom {
+  id: string;
+  lot_id: string;
+  folder_index: Record<string, unknown>;
+  completeness_status: Record<string, unknown>;
+  nda_required: boolean;
+  documents?: DataRoomDocument[];
+  created_at: string;
+}
+
+export interface DataRoomDocument {
+  id: string;
+  data_room_id: string;
+  folder_number: number;
+  folder_name: string;
+  filename: string;
+  file_size: number;
+  version: number;
+  status: string;
+  uploaded_at: string;
+}
+
+export interface Tender {
+  id: string;
+  lot_id: string;
+  tender_reference: string;
+  procurement_method: string;
+  status: string;
+  title: string;
+  description: string;
+  currency: string;
+  grant_ceiling_pct: number;
+  bid_validity_days: number;
+  submission_deadline: string | null;
+  created_at: string;
+}
+
+export interface TenderQuestion {
+  id: string;
+  tender_id: string;
+  company_name: string;
+  question: string;
+  answer: string | null;
+  asked_at: string;
+  answered_at: string | null;
+  published: boolean;
+}
+
+// ── Bidders & Bids ──────────────────────────────────────────────────
+
+export interface Bidder {
   id: string;
   company_name: string;
   registration_number: string;
-  country_of_incorporation: string;
+  country: string;
   contact_name: string;
   contact_email: string;
   contact_phone: string;
+  qualification_status: string;
+  kyc_status: string;
+  sanctions_check: string;
   years_experience: number;
   completed_sites: number;
   total_capacity_kwp: number;
-  qualification_docs: Record<string, unknown>;
-  approval_status: string; // pending, approved, rejected
-  approval_notes: string;
-  approved_at: string | null;
-  valid_until: string | null;
   created_at: string;
 }
 
-// Bid Evaluation
-export interface BidEvaluation {
+export interface Bid {
   id: string;
-  submission_id: string;
+  lot_id: string;
   tender_id: string;
-  company_name: string;
-  ai_total_score: number;
-  human_total_score: number | null;
-  final_score: number;
-  ai_summary: string;
-  ai_red_flags: string[];
-  ai_comparative_notes: string;
-  dares_eligible: boolean;
-  confidence_level: string;
+  bidder_id: string;
+  grant_ask_pct: number;
+  eligible_capex_usd: number;
+  total_capex_usd: number;
+  grant_amount_usd: number;
+  tariff_residential: number;
+  tariff_commercial: number;
+  tariff_pue: number;
+  pv_kwp: number;
+  bess_kwh: number;
+  connections: number;
+  timeline_months: number;
+  status: string;
+  submitted_at: string;
+}
+
+// ── Module 6: Evaluation ────────────────────────────────────────────
+
+export interface Evaluation {
+  id: string;
+  bid_id: string;
+  tender_id: string;
+  evaluator_id: string | null;
+  admin_responsive: boolean | null;
+  technical_score: number | null;
+  technical_threshold_met: boolean | null;
+  financial_score: number | null;
+  experience_score: number | null;
+  es_score: number | null;
+  total_score: number | null;
+  criteria_scores: Record<string, unknown>;
+  ai_flags_reviewed: boolean;
   status: string;
   recommended_for_award: boolean;
-  award_approved: boolean;
-  scores: EvaluationScoreItem[];
-  clarifications: ClarificationItem[];
+  ai_flags?: AIFlag[];
   created_at: string;
 }
 
-export interface EvaluationScoreItem {
+export interface AIFlag {
   id: string;
-  criterion: string;
-  weight: number;
-  ai_score: number;
-  ai_reasoning: string;
-  human_score: number | null;
-  human_justification: string;
-  final_score: number;
+  evaluation_id: string;
+  flag_type: string;
+  severity: string;
+  recommendation_text: string;
+  human_action: string | null;
+  override_reason: string | null;
+  timestamp: string;
 }
 
-export interface ClarificationItem {
+export interface NoObjectionPack {
   id: string;
-  round_number: number;
-  request_text: string;
-  response_text: string;
+  lot_id: string;
+  tender_id: string;
+  wb_status: string;
+  comments: string;
+  approval_date: string | null;
+  created_at: string;
+}
+
+// ── Module 7: Grant Agreements ──────────────────────────────────────
+
+export interface GrantAgreement {
+  id: string;
+  lot_id: string;
+  bidder_id: string;
+  grant_amount_usd: number;
+  eligible_capex_ceiling_usd: number;
+  grant_pct: number;
+  tranche_rules: Record<string, unknown>;
+  currency: string;
+  ringfenced_amount: number;
+  pbg_assignment_status: string;
+  pbg_lender: string;
+  agreement_date: string | null;
+  effective_date: string | null;
   status: string;
-  requested_at: string;
-  responded_at: string | null;
+  created_at: string;
+  cps?: ConditionPrecedent[];
 }
 
-// Disbursement / Milestones
-export interface MilestoneData {
+// ── Module 8: Conditions Precedent ──────────────────────────────────
+
+export interface ConditionPrecedent {
   id: string;
-  site_name: string;
-  milestone_number: number;
+  grant_agreement_id: string;
+  cp_category: string;
+  title: string;
+  description: string;
+  evidence_type: string;
+  owner_role: string;
+  verifier_role: string;
+  due_date: string | null;
+  status: string;
+  evidence_files: unknown[];
+  submitted_at: string | null;
+  verified_at: string | null;
+  waiver_status: string | null;
+  retry_count: number;
+  return_reason: string | null;
+  created_at: string;
+}
+
+// ── Module 9: CAPEX, Milestones, Disbursement ───────────────────────
+
+export interface EligibleCapex {
+  id: string;
+  grant_agreement_id: string;
+  category: string;
+  description: string;
+  invoice_ref: string;
+  claimed_amount: number;
+  eligible_amount: number;
+  iva_verified_amount: number;
+  disallowed_amount: number;
+  disallow_reason: string;
+  status: string;
+  created_at: string;
+}
+
+export interface Milestone {
+  id: string;
+  grant_agreement_id: string;
+  site_id: string | null;
+  milestone_type: string;
   title: string;
   description: string;
   tranche_pct: number;
   grant_amount_usd: number;
-  status: string; // not_started, submitted, under_review, approved, disbursed, overdue
+  evidence: Record<string, unknown>;
+  iva_status: string;
+  nemsa_status: string;
+  rea_approval_status: string;
   target_date: string | null;
   submitted_at: string | null;
+  verified_at: string | null;
   approved_at: string | null;
-  disbursed_at: string | null;
+  status: string;
+  created_at: string;
+  disbursement?: Disbursement | null;
+  gps_photos?: GPSPhoto[];
+  iva_visits?: IVAVisit[];
+}
+
+export interface Disbursement {
+  id: string;
+  milestone_id: string;
+  amount_usd: number;
+  currency: string;
+  beneficiary_account: string;
+  evidence_submitted_by: string | null;
+  evidence_submitted_at: string | null;
+  iva_verified_by: string | null;
+  iva_verified_at: string | null;
+  rea_approved_by: string | null;
+  rea_approved_at: string | null;
+  grant_admin_approved_by: string | null;
+  grant_admin_approved_at: string | null;
+  payment_status: string;
   payment_reference: string;
-  evidence: MilestoneEvidenceItem[];
-  kpi_data: Record<string, unknown>;
   created_at: string;
 }
 
-export interface MilestoneEvidenceItem {
-  id: string;
-  file_name: string;
-  file_type: string;
-  description: string;
-  verified: boolean;
-  verified_by: string | null;
-  uploaded_at: string;
-}
-
-export interface DisbursementDashboard {
-  total_committed: number;
-  total_disbursed: number;
-  total_remaining: number;
-  by_status: Record<string, number>;
-  by_developer: Array<{ developer: string; committed: number; disbursed: number; sites: number }>;
-  sites_on_track: number;
-  sites_delayed: number;
-}
-
-// Performance Monitoring
-export interface MonitoringSite {
-  site_id: string;
-  site_name: string;
-  developer: string;
-  capacity_kwp: number;
-  active_connections: number;
-  latest_availability: number;
-  latest_arpu: number;
-  latest_generation: number;
-  alert_count: number;
-}
-
-export interface SitePerformance {
-  site_id: string;
-  site_name: string;
-  records: MeteringRecord[];
-  kpis: SiteKPIs;
-}
-
-export interface MeteringRecord {
-  id: string;
-  period_start: string;
-  period_end: string;
-  total_generation_kwh: number;
-  total_consumption_kwh: number;
-  active_connections: number;
-  new_connections: number;
-  total_revenue_usd: number;
-  collection_rate_pct: number;
-  system_availability_pct: number;
-  renewable_fraction_pct: number;
-}
-
-export interface SiteKPIs {
-  avg_availability: number;
-  total_generation_kwh: number;
-  total_revenue_usd: number;
-  avg_arpu: number;
-  connection_growth_rate: number;
-  avg_collection_rate: number;
-  avg_renewable_fraction: number;
-}
-
-export interface PerformanceAlertData {
-  id: string;
-  site_id: string;
-  site_name: string;
-  alert_type: string;
-  severity: string;
-  title: string;
-  description: string;
-  metric_value: number;
-  threshold_value: number;
-  acknowledged: boolean;
-  created_at: string;
-}
-
-export interface MonitoringDashboard {
-  total_sites: number;
-  total_connections: number;
-  total_capacity_mwp: number;
-  total_generation_kwh: number;
-  total_grant_disbursed: number;
-  total_grant_committed: number;
-  avg_lcoe: number;
-  avg_arpu: number;
-  avg_availability: number;
-  by_disco: Record<string, { sites: number; connections: number; capacity_mwp: number }>;
-}
-
-// Banking
-export interface BankOfferData {
-  id: string;
-  bank_name: string;
-  contact_name: string;
-  contact_email: string;
-  loan_amount_usd: number;
-  interest_rate: number;
-  tenor_years: number;
-  grace_period_months: number;
-  collateral_requirements: string;
-  conditions: string;
-  status: string;
-  developer_interest: boolean;
-  created_at: string;
-}
-
-export interface InvestmentSummary {
-  portfolio_id: string;
-  portfolio_name: string;
-  disco_name: string;
-  total_sites: number;
-  total_capacity_kwp: number;
-  total_connections: number;
-  total_capex_usd: number;
-  capital_stack: { grant_pct: number; debt_pct: number; equity_pct: number };
-  avg_irr: number;
-  avg_lcoe: number;
-  avg_tariff: number;
-  grant_per_connection: number;
-  total_jobs_created: number;
-  total_co2_displaced: number;
-  sites: Array<{ name: string; capacity_kwp: number; connections: number; irr: number; lcoe: number }>;
-}
-
-// Grievances (Module 8)
-export interface Grievance {
-  id: string;
-  site_id: string | null;
-  site_name_text: string | null;
-  submitter_name: string | null;
-  submitter_contact: string | null;
-  submitter_type: string;
-  category: string;
-  description: string;
-  location_description: string | null;
-  is_anonymous: boolean;
-  status: string;
-  assigned_developer_id: string | null;
-  developer_response: string | null;
-  resolution_notes: string | null;
-  escalated_at: string | null;
-  resolved_at: string | null;
-  created_at: string;
-  updated_at: string;
-  comments?: GrievanceComment[];
-}
-
-export interface GrievanceComment {
-  id: string;
-  grievance_id: string;
-  author_role: string;
-  comment_text: string;
-  created_at: string;
-}
-
-export interface GrievanceReport {
-  total: number;
-  by_category: Record<string, number>;
-  by_status: Record<string, number>;
-  avg_resolution_days: number | null;
-  anonymous_count: number;
-  escalated_count: number;
-}
-
-// GPS Verification (Module 9)
 export interface GPSPhoto {
   id: string;
   milestone_id: string;
+  site_id: string | null;
   photo_filename: string;
   latitude: number;
   longitude: number;
@@ -479,41 +392,98 @@ export interface GPSPhoto {
   reviewer_notes: string | null;
 }
 
-export interface GPSVerificationSummary {
-  milestone_id: string;
-  photos: GPSPhoto[];
-  total_photos: number;
-  passing: number;
-  amber: number;
-  red: number;
-  can_approve: boolean;
-}
-
 export interface IVAVisit {
   id: string;
   site_id: string;
   milestone_id: string;
   trigger_reason: string;
   iva_name: string;
+  scheduled_date: string | null;
+  completed_date: string | null;
   status: string;
   verification_result: string | null;
   notes: string | null;
   created_at: string;
 }
 
-// ESG & Impact Reporting (Module 10)
-export interface ESGReport {
+// ── Module 10: Grievances ───────────────────────────────────────────
+
+export interface Grievance {
   id: string;
-  report_type: string;
-  title: string;
-  scope_type: string;
-  scope_id: string | null;
-  period_start: string;
-  period_end: string;
-  generated_at: string;
-  generated_by: string;
-  data_snapshot: Record<string, unknown>;
+  site_id: string | null;
+  lot_id: string | null;
+  complainant_type: string;
+  submitter_name: string | null;
+  submitter_contact: string | null;
+  category: string;
+  severity: string;
+  description: string;
+  location_description: string;
+  is_anonymous: boolean;
+  is_sea_sh: boolean;
   status: string;
+  assigned_to: string | null;
+  resolution_date: string | null;
+  corrective_action: string;
+  escalated_at: string | null;
+  created_at: string;
+  updated_at: string;
+  comments?: GrievanceComment[];
+}
+
+export interface GrievanceComment {
+  id: string;
+  grievance_id: string;
+  author_role: string;
+  comment_text: string;
+  created_at: string;
+}
+
+// ── Module 11: Settlement Ledger ────────────────────────────────────
+
+export interface SettlementLedgerEntry {
+  id: string;
+  site_id: string;
+  grant_agreement_id: string | null;
+  month: string;
+  bulk_meter_kwh: number;
+  grid_import_kwh: number;
+  der_generation_kwh: number;
+  duos_charge_usd: number;
+  grid_energy_charge_usd: number;
+  total_settlement_usd: number;
+  invoice_ref: string;
+  developer_accepted: boolean | null;
+  dispute_status: string | null;
+  dispute_reason: string | null;
+  payment_status: string;
+  created_at: string;
+}
+
+// ── Module 12: Performance & M&E ────────────────────────────────────
+
+export interface PerformanceRecord {
+  id: string;
+  site_id: string;
+  month: string;
+  connections: number;
+  new_connections: number;
+  pue_connections: number;
+  kwh_generated: number;
+  kwh_sold: number;
+  grid_import_kwh: number;
+  der_kwh: number;
+  revenue_usd: number;
+  collection_rate_pct: number;
+  availability_pct: number;
+  supply_hours: number;
+  saidi_minutes: number;
+  saifi_events: number;
+  capacity_utilisation_pct: number;
+  renewable_fraction_pct: number;
+  diesel_litres: number;
+  battery_soh_pct: number;
+  uploaded_at: string;
 }
 
 export interface GESIMetric {
@@ -540,14 +510,16 @@ export interface CarbonCredit {
   revenue_usd: number | null;
 }
 
-export interface BenchmarkData {
-  total_sites: number;
-  avg_system_availability_pct: number;
-  avg_collection_rate_pct: number;
-  avg_renewable_fraction_pct: number;
-  avg_connections_per_site: number;
-  total_connections: number;
-  total_pue_connections: number;
-  total_generation_kwh: number;
-  avg_supply_hours: number;
+export interface ESGReport {
+  id: string;
+  report_type: string;
+  title: string;
+  scope_type: string;
+  scope_id: string | null;
+  period_start: string;
+  period_end: string;
+  generated_at: string;
+  generated_by: string;
+  data_snapshot: Record<string, unknown>;
+  status: string;
 }

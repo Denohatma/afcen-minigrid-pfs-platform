@@ -5,105 +5,57 @@ import { buttonVariants } from "@/components/ui/button";
 const MODULES = [
   {
     href: "/sites",
-    title: "Site Registry",
-    description: "Browse and select candidate minigrid sites across DisCo franchise areas",
-    icon: (
-      <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-      </svg>
-    ),
+    title: "1. Site Registry",
+    description: "Browse 23,806 candidate settlements across AEDC, KEDCO, and IE franchise areas. Create lots for tendering.",
+    color: "text-blue-600 bg-blue-50",
   },
   {
-    href: "/portfolios",
-    title: "Portfolios & PFS",
-    description: "14-step pre-feasibility analysis pipeline with PUE-first system sizing",
-    icon: (
-      <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
-      </svg>
-    ),
+    href: "/disco-readiness",
+    title: "3. DisCo Readiness",
+    description: "Track feeder data, POI, bulk metering, customer data, and tripartite agreement status per site.",
+    color: "text-amber-600 bg-amber-50",
   },
   {
-    href: "/tenders",
-    title: "Tender Management",
-    description: "Competitive tender process — RFP issuance, Q&A, bid submission",
-    icon: (
-      <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-      </svg>
-    ),
+    href: "/lots",
+    title: "5. Lots & Tenders",
+    description: "Group sites into lots, build 8-folder data rooms, issue competitive tenders, and manage bidder NDA access.",
+    color: "text-indigo-600 bg-indigo-50",
   },
   {
     href: "/evaluations",
-    title: "Bid Evaluation",
-    description: "AI-assisted bid scoring with human validation and award decision",
-    icon: (
-      <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-      </svg>
-    ),
+    title: "6. Evaluation",
+    description: "5-stage evaluation with AI compliance flags (never scoring), human acknowledgement, and WB no-objection.",
+    color: "text-purple-600 bg-purple-50",
+  },
+  {
+    href: "/agreements",
+    title: "7–8. Agreements & CPs",
+    description: "Grant agreement management, ringfencing, PBG assignment, and conditions precedent tracker with waiver workflows.",
+    color: "text-teal-600 bg-teal-50",
   },
   {
     href: "/disbursements",
-    title: "RBF Disbursements",
-    description: "Results-based financing milestone tracking and grant disbursement",
-    icon: (
-      <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
-  },
-  {
-    href: "/monitoring",
-    title: "Performance Monitoring",
-    description: "Live operational dashboard with KPI tracking and performance alerts",
-    icon: (
-      <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-      </svg>
-    ),
-  },
-  {
-    href: "/developers",
-    title: "Developer Management",
-    description: "Register, qualify, and manage minigrid developer companies",
-    icon: (
-      <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-      </svg>
-    ),
+    title: "9. Milestones & Disbursement",
+    description: "Eligible CAPEX grant engine, 4-role segregated approval chain, GPS verification, and IVA visit scheduling.",
+    color: "text-green-600 bg-green-50",
   },
   {
     href: "/grievances",
-    title: "Grievances",
-    description: "Community grievance intake, tracking, and resolution — DARES World Bank safeguards compliant",
-    icon: (
-      <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-      </svg>
-    ),
+    title: "10. E&S / SEP / GRM",
+    description: "Community grievance intake (including anonymous & SEA/SH), escalation workflows, and corrective action tracking.",
+    color: "text-red-600 bg-red-50",
   },
   {
-    href: "/gps-verification",
-    title: "GPS Verify",
-    description: "GPS-tagged photo verification for RBF milestone claims — reduces IVA site visit costs",
-    icon: (
-      <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-      </svg>
-    ),
+    href: "/settlement-ledger",
+    title: "11. DisCo Settlement",
+    description: "Monthly settlement ledger: bulk meter readings, DUoS charges, grid energy charges, dispute resolution.",
+    color: "text-orange-600 bg-orange-50",
   },
   {
-    href: "/reports",
-    title: "ESG & Impact Reports",
-    description: "ESG impact reporting, GESI metrics, and carbon credit tracking for DARES compliance",
-    icon: (
-      <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-      </svg>
-    ),
+    href: "/performance",
+    title: "12. Performance & M&E",
+    description: "Operational KPIs, GESI metrics, carbon credit tracking, and ESG impact reporting across the portfolio.",
+    color: "text-cyan-600 bg-cyan-50",
   },
 ];
 
@@ -113,38 +65,43 @@ export default function HomePage() {
       <div className="flex flex-col items-center gap-6 pt-12 pb-8">
         <Image
           src="/logo-full.svg"
-          alt="InvestIQ: IMG Nigeria"
+          alt="InvestIQ: DARES IMG"
           width={280}
           height={100}
           priority
         />
         <div className="text-center">
           <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            InvestIQ: IMG Nigeria
+            DARES Interconnected Mini-Grids
           </h1>
           <p className="mt-3 max-w-2xl text-lg text-muted-foreground">
-            End-to-end minigrid program management platform for the DARES/NEP framework.
-            Site selection, PFS analysis, tendering, grant disbursement, and performance monitoring
+            12-module programme operating system for the REA/DARES interconnected mini-grid
+            CAPEX grant scheme. End-to-end: site selection through to performance monitoring
             across AEDC, KEDCO, and Ikeja Electric franchise areas.
           </p>
         </div>
-        <Link
-          href="/portfolios"
-          className={buttonVariants({ size: "lg", className: "px-8 text-base" })}
-        >
-          Get Started
-        </Link>
+        <div className="flex gap-3">
+          <Link
+            href="/sites"
+            className={buttonVariants({ size: "lg", className: "px-8 text-base" })}
+          >
+            Open Site Registry
+          </Link>
+          <Link
+            href="/lots"
+            className={buttonVariants({ variant: "outline", size: "lg", className: "px-8 text-base" })}
+          >
+            Manage Tenders
+          </Link>
+        </div>
       </div>
 
-      <div className="mt-6 grid w-full max-w-5xl gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="mt-6 grid w-full max-w-5xl gap-4 md:grid-cols-2 lg:grid-cols-3">
         {MODULES.map((mod) => (
           <Link key={mod.href} href={mod.href} className="group">
             <div className="rounded-lg border bg-card p-5 shadow-sm transition-all hover:shadow-md hover:border-primary/30 h-full">
-              <div className="mb-3 inline-flex rounded-md bg-primary/10 p-2 text-primary group-hover:bg-primary/20 transition-colors">
-                {mod.icon}
-              </div>
               <h3 className="font-heading text-base font-semibold">{mod.title}</h3>
-              <p className="mt-1 text-sm text-muted-foreground leading-relaxed">{mod.description}</p>
+              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{mod.description}</p>
             </div>
           </Link>
         ))}
@@ -152,9 +109,10 @@ export default function HomePage() {
 
       <div className="mt-12 max-w-3xl rounded-lg bg-muted/50 p-6 text-center">
         <p className="text-sm text-muted-foreground">
-          <strong>Nigeria DARES Pilot</strong> — Three DisCo franchise areas: AEDC (Abuja/FCT),
+          <strong>DARES/IDA Pilot</strong> — Three DisCo franchise areas: AEDC (Abuja/FCT),
           KEDCO (Kano, Katsina, Jigawa), Ikeja Electric (Northern Lagos).
-          Powered by the AfCEN 14-step PFS computational pipeline with 23,806 candidate settlements.
+          23,806 candidate settlements ranked by IMG suitability score.
+          Non-discretionary grant disbursement with 4-role segregated approval.
         </p>
       </div>
     </div>

@@ -80,14 +80,14 @@ export default function SitesPage() {
   });
 
   const { data: sitesData } = useQuery({
-    queryKey: ["sites"],
-    queryFn: () => api.sites.list(),
+    queryKey: ["site-registry"],
+    queryFn: () => api.siteRegistry.list({ limit: 100 }),
   });
 
   const settlements = data?.settlements ?? [];
   const total = data?.total ?? 0;
   const totalPages = Math.ceil(total / pageSize);
-  const assessedSites = sitesData?.sites ?? [];
+  const assessedSites: Array<Record<string, any>> = (sitesData?.sites ?? []) as any;
 
   const toggleSelect = (rank: number) => {
     setSelectedRanks((prev) => {
@@ -328,8 +328,8 @@ export default function SitesPage() {
                     >
                       Clear
                     </Button>
-                    <Link href="/portfolios/new">
-                      <Button size="sm">Create Portfolio</Button>
+                    <Link href="/lots">
+                      <Button size="sm">Create Lot</Button>
                     </Link>
                   </div>
                 </div>
