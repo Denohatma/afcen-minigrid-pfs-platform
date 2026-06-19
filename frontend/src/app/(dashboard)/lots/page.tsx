@@ -250,7 +250,7 @@ export default function LotsPage() {
                         <TableCell className="text-right font-mono text-sm">
                           <div>{formatUSD(lot.grant_ceiling_usd)}</div>
                           <div className="text-xs text-muted-foreground">
-                            {lot.grant_ceiling_pct}%
+                            {(lot.grant_ceiling_pct * 100).toFixed(0)}%
                           </div>
                         </TableCell>
                         <TableCell>

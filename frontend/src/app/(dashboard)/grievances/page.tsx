@@ -42,15 +42,14 @@ const STATUS_OPTIONS = [
 
 const CATEGORY_OPTIONS = [
   { value: "", label: "All Categories" },
-  { value: "land_dispute", label: "Land Dispute" },
-  { value: "environmental_concern", label: "Environmental Concern" },
-  { value: "tariff_complaint", label: "Tariff Complaint" },
+  { value: "land_resettlement", label: "Land / Resettlement" },
+  { value: "environmental", label: "Environmental" },
+  { value: "worker_safety", label: "Worker Safety" },
   { value: "service_quality", label: "Service Quality" },
-  { value: "safety_hazard", label: "Safety Hazard" },
-  { value: "construction_damage", label: "Construction Damage" },
-  { value: "noise_pollution", label: "Noise Pollution" },
-  { value: "employment_dispute", label: "Employment Dispute" },
   { value: "sea_sh", label: "SEA/SH" },
+  { value: "labour", label: "Labour" },
+  { value: "compensation", label: "Compensation" },
+  { value: "noise_dust", label: "Noise / Dust" },
   { value: "other", label: "Other" },
 ];
 
@@ -98,7 +97,7 @@ export default function GrievancesPage() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">
-              {dashboard?.total_grievances ?? 0}
+              {dashboard?.total ?? 0}
             </p>
           </CardContent>
         </Card>

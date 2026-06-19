@@ -20,6 +20,7 @@ import {
 
 const TENDER_STATUS_COLORS: Record<string, string> = {
   draft: "bg-gray-100 text-gray-700",
+  issued: "bg-green-100 text-green-700",
   open: "bg-green-100 text-green-700",
   closed: "bg-amber-100 text-amber-700",
   under_evaluation: "bg-blue-100 text-blue-700",
@@ -28,10 +29,11 @@ const TENDER_STATUS_COLORS: Record<string, string> = {
 
 const EVAL_STATUS_COLORS: Record<string, string> = {
   pending: "bg-gray-100 text-gray-700",
+  "in progress": "bg-blue-100 text-blue-700",
+  complete: "bg-green-100 text-green-700",
   admin_check: "bg-yellow-100 text-yellow-700",
   technical: "bg-blue-100 text-blue-700",
   financial: "bg-indigo-100 text-indigo-700",
-  complete: "bg-green-100 text-green-700",
   recommended: "bg-emerald-100 text-emerald-700",
 };
 
@@ -53,12 +55,12 @@ const FLAG_SEVERITY_COLORS: Record<string, string> = {
 /* ── Helpers ──────────────────────────────────────────────────────── */
 
 function tenderStatusLabel(lot: Lot): string {
-  if (!lot.tender) return "No tender";
-  return lot.tender.status.replace(/_/g, " ");
+  if (!lot.tender_status || lot.tender_status === "none") return "No tender";
+  return lot.tender_status.replace(/_/g, " ");
 }
 
 function evaluationStatusLabel(lot: Lot): string {
-  if (!lot.tender) return "—";
+  if (!lot.tender_status || lot.tender_status === "none") return "—";
   return lot.tender_status === "awarded"
     ? "complete"
     : lot.tender_status === "under_evaluation"
@@ -77,7 +79,7 @@ export default function EvaluationsPage() {
   const lots = lotsData?.lots || [];
 
   /* Summary counters */
-  const withTender = lots.filter((l) => l.tender);
+  const withTender = lots.filter((l) => l.tender_status && l.tender_status !== "none");
   const underEval = lots.filter(
     (l) => l.tender_status === "under_evaluation"
   );
@@ -192,8 +194,8 @@ export default function EvaluationsPage() {
               </TableHeader>
               <TableBody>
                 {lots.map((lot) => {
-                  const hasTender = !!lot.tender;
-                  const tenderStatus = lot.tender?.status || "";
+                  const hasTender = !!lot.tender_status && lot.tender_status !== "none";
+                  const tenderStatus = lot.tender_status || "";
                   const evalStatus = evaluationStatusLabel(lot);
 
                   return (
