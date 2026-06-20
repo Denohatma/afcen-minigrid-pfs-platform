@@ -26,7 +26,14 @@ const TENDER_STATUS_COLORS: Record<string, string> = {
   draft: "bg-gray-100 text-gray-700",
   issued: "bg-blue-100 text-blue-800",
   closed: "bg-amber-100 text-amber-800",
-  awarded: "bg-green-100 text-green-800",
+  awarded: "bg-emerald-100 text-emerald-800",
+  none: "bg-gray-100 text-gray-500",
+};
+
+const DATA_ROOM_COLORS: Record<string, string> = {
+  complete: "bg-green-100 text-green-800",
+  in_progress: "bg-blue-100 text-blue-800",
+  not_started: "bg-gray-100 text-gray-500",
 };
 
 function fmt(n: number) {
@@ -56,57 +63,75 @@ export default function LotsPage() {
   const allLots = lotsData?.lots ?? [];
   const bidders = biddersData?.bidders ?? [];
 
-  const approvedLots = allLots.filter((l) => l.approval_to_tender);
-  const pendingLots = allLots.filter((l) => !l.approval_to_tender);
+  const approvedLots = allLots.filter((l) => l.disco_status === "approved");
+  const pendingLots = allLots.filter((l) => (l.disco_status || "pending") === "pending");
 
-  const readyForTender = approvedLots.filter((l) => l.tender_status === "approved" || l.tender_status === "none");
-  const tendersIssued = approvedLots.filter((l) => l.tender_status === "issued" || l.tender_status === "closed" || l.tender_status === "awarded");
+  const readyForTender = approvedLots.filter((l) => l.tender_status === "approved" || l.tender_status === "none" || l.tender_status === "draft");
+  const tendersIssued = approvedLots.filter((l) => l.tender_status === "issued");
+  const tendersClosed = approvedLots.filter((l) => l.tender_status === "closed" || l.tender_status === "awarded");
+  const totalConnections = approvedLots.reduce((s, l) => s + l.total_connections, 0);
 
   return (
     <div className="text-[13px]">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-heading text-base font-bold">Tenders</h1>
-          <p className="text-[11px] text-muted-foreground">
-            {approvedLots.length} DisCo-approved lots &middot; {readyForTender.length} ready for tender &middot; {tendersIssued.length} tenders issued
-            {pendingLots.length > 0 && (
-              <> &middot; <Link href="/disco-readiness" className="text-amber-700 underline">{pendingLots.length} pending DisCo approval</Link></>
-            )}
-          </p>
-        </div>
+      <div>
+        <h1 className="font-heading text-base font-bold">Lot & Tender Management</h1>
+        <p className="text-[11px] text-muted-foreground">
+          Program manager dashboard for tender lifecycle
+          {pendingLots.length > 0 && (
+            <> &middot; <Link href="/disco-readiness" className="text-amber-700 underline">{pendingLots.length} pending DisCo</Link></>
+          )}
+        </p>
       </div>
 
       {/* Flow indicator */}
       <div className="mt-1.5 flex items-center gap-1.5 text-[10px] text-muted-foreground">
-        <span className="rounded bg-muted px-1.5 py-0.5">Step 1</span>
-        <span>Sites selected</span>
+        <span className="rounded bg-muted px-1.5 py-0.5">1</span>
+        <span>Sites</span>
         <span className="text-border">→</span>
-        <span className="rounded bg-muted px-1.5 py-0.5">Step 2</span>
-        <span>DisCo approved</span>
+        <span className="rounded bg-muted px-1.5 py-0.5">2</span>
+        <span>System Sizing</span>
         <span className="text-border">→</span>
-        <span className="rounded bg-primary/10 px-1.5 py-0.5 font-semibold text-primary">Step 3</span>
-        <span>Package for tender</span>
+        <span className="rounded bg-muted px-1.5 py-0.5">3</span>
+        <span>DisCo Approval</span>
+        <span className="text-border">→</span>
+        <span className="rounded bg-primary/10 px-1.5 py-0.5 font-semibold text-primary">4</span>
+        <span>Tenders</span>
+      </div>
+
+      {/* Stat boxes — half height */}
+      <div className="mt-2 grid grid-cols-4 gap-2">
+        {[
+          { label: "DisCo-Approved Lots", value: approvedLots.length },
+          { label: "Ready for Tender", value: readyForTender.length },
+          { label: "Tenders Issued", value: tendersIssued.length },
+          { label: "Total Connections", value: fmt(totalConnections) },
+        ].map((s) => (
+          <div key={s.label} className="rounded border border-border bg-white px-3 py-1.5">
+            <div className="text-[10px] text-muted-foreground">{s.label}</div>
+            <div className="font-heading text-lg font-bold leading-tight">{s.value}</div>
+          </div>
+        ))}
       </div>
 
       {/* Compact filter */}
       <div className="mt-2 flex items-center gap-1.5">
-        <select className="h-6 rounded border border-input bg-background px-1.5 text-[11px]" value={disco} onChange={(e) => setDisco(e.target.value)}>
+        <select className="h-5 rounded border border-input bg-background px-1.5 text-[10px]" value={disco} onChange={(e) => setDisco(e.target.value)}>
           {DISCO_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
         {disco && <button className="text-[10px] text-muted-foreground underline" onClick={() => setDisco("")}>clear</button>}
       </div>
 
-      {/* Lots Table */}
+      {/* Main lots table */}
       <div className="mt-2 rounded border border-border bg-white">
-        <div className="flex items-center justify-between border-b border-border px-3 py-1.5">
-          <span className="text-[11px] font-semibold">DisCo-Approved Lots ({approvedLots.length})</span>
+        <div className="border-b border-border px-3 py-1.5">
+          <span className="text-[11px] font-semibold">Tender Pipeline ({approvedLots.length})</span>
         </div>
         {isLoading ? (
           <div className="p-4 text-center text-xs text-muted-foreground">Loading...</div>
         ) : approvedLots.length === 0 ? (
           <div className="p-6 text-center text-xs text-muted-foreground">
-            No DisCo-approved lots available for tender.{" "}
-            <Link href="/disco-readiness" className="text-primary underline">Go to DisCo Approval</Link> to approve lots first.
+            No DisCo-approved lots available.{" "}
+            <Link href="/disco-readiness" className="text-primary underline">Go to DisCo Approval</Link>
           </div>
         ) : (
           <Table>
@@ -114,42 +139,66 @@ export default function LotsPage() {
               <TableRow className="text-[11px]">
                 <TableHead className="py-1.5">Lot Name</TableHead>
                 <TableHead className="py-1.5">DisCo</TableHead>
-                <TableHead className="py-1.5 text-right">Sites</TableHead>
-                <TableHead className="py-1.5 text-right">Connections (Est.)</TableHead>
+                <TableHead className="py-1.5 text-right">Potential Connections</TableHead>
+                <TableHead className="py-1.5">Data Room</TableHead>
+                <TableHead className="py-1.5">Tender Docs</TableHead>
                 <TableHead className="py-1.5">Tender Status</TableHead>
-                <TableHead className="py-1.5 text-center">Bids Received</TableHead>
-                <TableHead className="py-1.5">Actions</TableHead>
+                <TableHead className="py-1.5 text-center">EOIs</TableHead>
+                <TableHead className="py-1.5 text-center">Bids Downloaded</TableHead>
+                <TableHead className="py-1.5">Details</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {approvedLots.map((lot) => (
-                <TableRow key={lot.id} className="text-[12px]">
-                  <TableCell className="py-1">
-                    <div className="font-medium">{lot.lot_name}</div>
-                    {lot.state && <div className="text-[10px] text-muted-foreground">{lot.state}</div>}
-                  </TableCell>
-                  <TableCell className="py-1">
-                    <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px]">{lot.disco}</span>
-                  </TableCell>
-                  <TableCell className="py-1 text-right font-mono text-[11px]">{fmt(lot.site_count)}</TableCell>
-                  <TableCell className="py-1 text-right font-mono text-[11px]">{fmt(lot.total_connections)}</TableCell>
-                  <TableCell className="py-1">
-                    <span className={`inline-block rounded px-1.5 py-px text-[10px] font-medium ${TENDER_STATUS_COLORS[lot.tender_status] ?? "bg-gray-100 text-gray-700"}`}>
-                      {lot.tender_status === "approved" ? "Ready for Tender" : formatLabel(lot.tender_status)}
-                    </span>
-                  </TableCell>
-                  <TableCell className="py-1 text-center font-mono text-[11px]">
-                    {lot.tender_status === "closed" || lot.tender_status === "awarded"
-                      ? bidders.filter((b) => (b as any).lot_id === lot.id).length || "—"
-                      : "—"}
-                  </TableCell>
-                  <TableCell className="py-1">
-                    <Link href={`/lots/${lot.id}`}>
-                      <Button variant="outline" size="sm" className="h-5 px-2 text-[10px]">View Sites & Details</Button>
-                    </Link>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {approvedLots.map((lot) => {
+                const drStatus = lot.data_room_status || "not_started";
+                const hasTender = lot.tender_status === "issued" || lot.tender_status === "closed" || lot.tender_status === "awarded";
+                const tenderDocsStatus = hasTender ? "published" : lot.tender_status === "draft" ? "draft" : "not_started";
+                return (
+                  <TableRow key={lot.id} className="text-[12px]">
+                    <TableCell className="py-1">
+                      <div className="font-medium">{lot.lot_name}</div>
+                      {lot.state && <div className="text-[10px] text-muted-foreground">{lot.state}</div>}
+                    </TableCell>
+                    <TableCell className="py-1">
+                      <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px]">{lot.disco}</span>
+                    </TableCell>
+                    <TableCell className="py-1 text-right font-mono text-[11px]">{fmt(lot.total_connections)}</TableCell>
+                    <TableCell className="py-1">
+                      <span className={`inline-block rounded px-1.5 py-px text-[10px] font-medium ${DATA_ROOM_COLORS[drStatus] || "bg-gray-100 text-gray-500"}`}>
+                        {formatLabel(drStatus)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-1">
+                      <span className={`inline-block rounded px-1.5 py-px text-[10px] font-medium ${
+                        tenderDocsStatus === "published" ? "bg-green-100 text-green-800"
+                        : tenderDocsStatus === "draft" ? "bg-amber-100 text-amber-800"
+                        : "bg-gray-100 text-gray-500"
+                      }`}>
+                        {formatLabel(tenderDocsStatus)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-1">
+                      <span className={`inline-block rounded px-1.5 py-px text-[10px] font-medium ${TENDER_STATUS_COLORS[lot.tender_status] || "bg-gray-100 text-gray-500"}`}>
+                        {lot.tender_status === "approved" ? "Ready" : formatLabel(lot.tender_status)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-1 text-center font-mono text-[11px]">
+                      {hasTender ? (bidders.length || "—") : "—"}
+                    </TableCell>
+                    <TableCell className="py-1 text-center font-mono text-[11px]">—</TableCell>
+                    <TableCell className="py-1">
+                      <div className="flex items-center gap-1">
+                        <Link href={`/lots/${lot.id}`}>
+                          <Button variant="outline" size="sm" className="h-5 px-1.5 text-[10px]">Data Room</Button>
+                        </Link>
+                        <Link href={`/lots/${lot.id}`}>
+                          <Button variant="outline" size="sm" className="h-5 px-1.5 text-[10px]">Bid Docs</Button>
+                        </Link>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         )}
@@ -157,7 +206,7 @@ export default function LotsPage() {
 
       {/* Bidders section */}
       {bidders.length > 0 && (
-        <div className="mt-3 rounded border border-border bg-white">
+        <div className="mt-2.5 rounded border border-border bg-white">
           <div className="border-b border-border px-3 py-1.5">
             <span className="text-[11px] font-semibold">Registered Bidders ({bidders.length})</span>
           </div>

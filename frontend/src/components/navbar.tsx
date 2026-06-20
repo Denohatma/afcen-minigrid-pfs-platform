@@ -7,14 +7,15 @@ import { usePathname, useRouter } from "next/navigation";
 
 const NAV_ITEMS = [
   { href: "/sites", label: "Sites", step: 1 },
-  { href: "/disco-readiness", label: "DisCo", step: 2 },
-  { href: "/lots", label: "Tenders", step: 3 },
-  { href: "/evaluations", label: "Eval", step: 4 },
-  { href: "/agreements", label: "Agreements", step: 5 },
-  { href: "/disbursements", label: "Disburse", step: 6 },
-  { href: "/grievances", label: "GRM", step: 7 },
-  { href: "/settlement-ledger", label: "Settle", step: 8 },
-  { href: "/performance", label: "M&E", step: 9 },
+  { href: "/system-sizing", label: "Sizing", step: 2 },
+  { href: "/disco-readiness", label: "DisCo", step: 3 },
+  { href: "/lots", label: "Tenders", step: 4 },
+  { href: "/evaluations", label: "Eval", step: 5 },
+  { href: "/agreements", label: "Agreements", step: 6 },
+  { href: "/disbursements", label: "Disburse", step: 7 },
+  { href: "/grievances", label: "GRM", step: 8 },
+  { href: "/settlement-ledger", label: "Settle", step: 9 },
+  { href: "/performance", label: "M&E", step: 10 },
 ];
 
 function getActiveStep(pathname: string): number {

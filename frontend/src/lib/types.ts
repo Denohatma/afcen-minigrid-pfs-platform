@@ -125,6 +125,11 @@ export interface Lot {
   data_room_status: string;
   tender_status: string;
   approval_to_tender: boolean;
+  disco_status: string;
+  disco_notes: string;
+  data_pack_availed: boolean;
+  approved_by: string | null;
+  approved_at: string | null;
   site_count: number;
   total_connections: number;
   created_at: string;

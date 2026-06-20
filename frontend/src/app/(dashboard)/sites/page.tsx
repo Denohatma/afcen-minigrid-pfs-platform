@@ -146,11 +146,15 @@ export default function SitesPage() {
         disco: sel.disco,
         state: sel.state,
       });
+      await api.lots.update(lot.id, {
+        site_count: sel.n,
+        total_connections: sel.conn,
+      } as any);
       await queryClient.invalidateQueries({ queryKey: ["lots"] });
       setSelectedRanks(new Set());
       setShowLotForm(false);
       setLotName("");
-      router.push("/disco-readiness");
+      router.push("/system-sizing");
     } catch (e) {
       alert("Failed to create lot. Please try again.");
     } finally {
@@ -210,14 +214,17 @@ export default function SitesPage() {
 
       {/* Flow indicator */}
       <div className="mt-1.5 flex items-center gap-1.5 text-[10px] text-muted-foreground">
-        <span className="rounded bg-primary/10 px-1.5 py-0.5 font-semibold text-primary">Step 1</span>
-        <span>Select sites &amp; create lot</span>
+        <span className="rounded bg-primary/10 px-1.5 py-0.5 font-semibold text-primary">1</span>
+        <span>Select sites</span>
         <span className="text-border">→</span>
-        <span className="rounded bg-muted px-1.5 py-0.5">Step 2</span>
-        <span>DisCo approves interconnection</span>
+        <span className="rounded bg-muted px-1.5 py-0.5">2</span>
+        <span>System Sizing</span>
         <span className="text-border">→</span>
-        <span className="rounded bg-muted px-1.5 py-0.5">Step 3</span>
-        <span>Package for tender</span>
+        <span className="rounded bg-muted px-1.5 py-0.5">3</span>
+        <span>DisCo Approval</span>
+        <span className="text-border">→</span>
+        <span className="rounded bg-muted px-1.5 py-0.5">4</span>
+        <span>Tenders</span>
       </div>
 
       {/* Scoring + stats strip */}

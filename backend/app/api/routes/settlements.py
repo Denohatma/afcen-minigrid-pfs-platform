@@ -31,7 +31,7 @@ async def list_settlements(
     min_pop: int = Query(0, ge=0),
     max_grid_dist: Optional[float] = Query(None),
     search: Optional[str] = Query(None, description="Search village name"),
-    limit: int = Query(50, ge=1, le=500),
+    limit: int = Query(50, ge=1, le=25000),
     offset: int = Query(0, ge=0),
 ):
     data = _load()

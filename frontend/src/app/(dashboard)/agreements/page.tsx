@@ -1,48 +1,49 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 import { api } from "@/lib/api";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const STATUS_COLORS: Record<string, string> = {
   draft: "bg-gray-100 text-gray-700",
   pending: "bg-amber-100 text-amber-800",
   active: "bg-green-100 text-green-800",
+  completed: "bg-blue-100 text-blue-800",
   terminated: "bg-red-100 text-red-800",
 };
 
-const PBG_COLORS: Record<string, string> = {
-  not_assigned: "bg-gray-100 text-gray-700",
-  assigned: "bg-green-100 text-green-800",
-};
-
-const CP_STATUS_COLORS: Record<string, string> = {
-  pending: "bg-gray-100 text-gray-700",
-  submitted: "bg-blue-100 text-blue-800",
-  verified: "bg-green-100 text-green-800",
-  returned: "bg-amber-100 text-amber-800",
-  waived: "bg-purple-100 text-purple-700",
-  overdue: "bg-red-100 text-red-800",
+const CP_SUMMARY_COLORS: Record<string, string> = {
+  none: "text-muted-foreground",
+  partial: "text-amber-700",
+  complete: "text-green-700",
 };
 
 function formatUSD(amount: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(amount);
+  if (amount >= 1_000_000) return `$${(amount / 1_000_000).toFixed(1)}M`;
+  if (amount >= 1_000) return `$${(amount / 1_000).toFixed(0)}K`;
+  return `$${amount.toFixed(0)}`;
 }
 
-function shortId(id: string) {
-  return id.slice(0, 8).toUpperCase();
+function formatLabel(s: string) {
+  return s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 export default function AgreementsPage() {
-  const { data: dashboard } = useQuery({
-    queryKey: ["agreements-dashboard"],
-    queryFn: () => api.agreements.dashboard(),
+  const { data: lotsData } = useQuery({
+    queryKey: ["lots"],
+    queryFn: () => api.lots.list(),
   });
 
-  const { data: agreementsData } = useQuery({
+  const { data: agreementsData, isLoading } = useQuery({
     queryKey: ["agreements"],
     queryFn: () => api.agreements.list(),
   });
@@ -52,256 +53,202 @@ export default function AgreementsPage() {
     queryFn: () => api.cps.dashboard(),
   });
 
-  const agreements = agreementsData?.agreements || [];
-  const dash = dashboard as Record<string, unknown> | undefined;
+  const lots = lotsData?.lots ?? [];
+  const agreements = agreementsData?.agreements ?? (Array.isArray(agreementsData) ? agreementsData : []);
   const cpDash = cpDashboard as Record<string, unknown> | undefined;
 
-  const totalAgreements = (dash?.total_agreements as number) || agreements.length;
-  const activeCount = (dash?.active_count as number) || agreements.filter(a => a.status === "active").length;
-  const totalGrantValue = (dash?.total_grant_value as number) || agreements.reduce((sum, a) => sum + a.grant_amount_usd, 0);
-  const totalRingfenced = (dash?.total_ringfenced as number) || agreements.reduce((sum, a) => sum + a.ringfenced_amount, 0);
+  const lotsById = Object.fromEntries(lots.map((l) => [l.id, l]));
 
-  const cpTotal = (cpDash?.total_cps as number) || 0;
-  const cpVerified = (cpDash?.verified as number) || 0;
-  const cpPending = (cpDash?.pending as number) || 0;
-  const cpSubmitted = (cpDash?.submitted as number) || 0;
-  const cpReturned = (cpDash?.returned as number) || 0;
-  const cpWaived = (cpDash?.waived as number) || 0;
-  const cpOverdue = (cpDash?.overdue as number) || 0;
-  const cpCompletionPct = cpTotal > 0 ? (((cpVerified + cpWaived) / cpTotal) * 100) : 0;
-
-  // Collect all CPs from agreements that have them
-  const allCPs = agreements.flatMap(a =>
-    (a.cps || []).map(cp => ({ ...cp, agreement_id_short: shortId(a.id) }))
+  const totalAgreements = agreements.length;
+  const agreementsWithCPs = agreements.filter(
+    (a) => a.cps && a.cps.length > 0
+  ).length;
+  const totalProgramValue = agreements.reduce(
+    (s, a) => s + (a.eligible_capex_ceiling_usd || 0),
+    0
+  );
+  const totalGrantValue = agreements.reduce(
+    (s, a) => s + (a.grant_amount_usd || 0),
+    0
   );
 
+  const cpTotal = (cpDash?.total_cps as number) || 0;
+
+  interface AgreementRow {
+    id: string;
+    lotName: string;
+    disco: string;
+    bidReviewNotes: string;
+    agreementStatus: string;
+    cpSummary: string;
+    cpState: string;
+    grantAmountUsd: number;
+    estimatedCOD: string;
+    lotId: string;
+  }
+
+  const rows: AgreementRow[] = agreements.map((ag) => {
+    const lot = lotsById[ag.lot_id];
+    const cps = ag.cps || [];
+    const cpVerified = cps.filter(
+      (cp) => cp.status === "verified" || cp.status === "waived"
+    ).length;
+    const cpTotal = cps.length;
+
+    let cpSummary = "No CPs";
+    let cpState = "none";
+    if (cpTotal > 0) {
+      cpSummary = `${cpVerified}/${cpTotal} met`;
+      cpState = cpVerified === cpTotal ? "complete" : "partial";
+    }
+
+    const agreementData = (ag as Record<string, unknown>).agreement_data as
+      | Record<string, unknown>
+      | undefined;
+    const codEstimate =
+      (agreementData?.estimated_cod as string) ||
+      (ag.effective_date
+        ? new Date(
+            new Date(ag.effective_date).getTime() + 365 * 24 * 60 * 60 * 1000
+          )
+            .toISOString()
+            .split("T")[0]
+        : "—");
+
+    const reviewNotes =
+      (agreementData?.bid_review_notes as string) || "Pending review";
+
+    return {
+      id: ag.id,
+      lotName: lot?.lot_name || ag.lot_id.slice(0, 8).toUpperCase(),
+      disco: lot?.disco || "—",
+      bidReviewNotes: reviewNotes,
+      agreementStatus: ag.status,
+      cpSummary,
+      cpState,
+      grantAmountUsd: ag.grant_amount_usd || 0,
+      estimatedCOD: codEstimate,
+      lotId: ag.lot_id,
+    };
+  });
+
   return (
-    <div>
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-heading text-2xl font-bold">Agreements &amp; Conditions Precedent</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Grant agreement management and CP tracking (Modules 7-8)
-          </p>
-        </div>
+    <div className="text-[13px]">
+      <div>
+        <h1 className="font-heading text-base font-bold">
+          Agreements & Conditions Precedent
+        </h1>
+        <p className="text-[11px] text-muted-foreground">
+          DARES grant agreements and CP tracking &middot; {totalAgreements}{" "}
+          agreements &middot; {cpTotal} conditions precedent
+        </p>
       </div>
 
-      <Tabs defaultValue="agreements" className="mt-6">
-        <TabsList>
-          <TabsTrigger value="agreements">Grant Agreements ({agreements.length})</TabsTrigger>
-          <TabsTrigger value="cps">Conditions Precedent</TabsTrigger>
-        </TabsList>
-
-        {/* ── Tab 1: Grant Agreements ──────────────────────────────────── */}
-        <TabsContent value="agreements" className="mt-4">
-          <div className="grid gap-4 md:grid-cols-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-muted-foreground">Total Agreements</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold">{totalAgreements}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-muted-foreground">Active</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold text-green-700">{activeCount}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-muted-foreground">Total Grant Value</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold">{formatUSD(totalGrantValue)}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-muted-foreground">Ringfenced</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold text-amber-700">{formatUSD(totalRingfenced)}</p>
-              </CardContent>
-            </Card>
+      <div className="mt-1.5 grid grid-cols-4 gap-2">
+        {[
+          { label: "Total Agreements", value: totalAgreements },
+          { label: "Agreements with CPs", value: agreementsWithCPs },
+          {
+            label: "Total Program Value",
+            value: totalProgramValue > 0 ? formatUSD(totalProgramValue) : "$0",
+          },
+          {
+            label: "Total Grant Value",
+            value: totalGrantValue > 0 ? formatUSD(totalGrantValue) : "$0",
+          },
+        ].map((s) => (
+          <div
+            key={s.label}
+            className="rounded border border-border bg-white px-3 py-1"
+          >
+            <div className="text-[10px] text-muted-foreground">{s.label}</div>
+            <div className="font-heading text-lg font-bold leading-tight">
+              {s.value}
+            </div>
           </div>
+        ))}
+      </div>
 
-          <Card className="mt-4">
-            <CardContent className="pt-6">
-              {agreements.length === 0 ? (
-                <div className="py-8 text-center text-muted-foreground">
-                  No grant agreements created yet. Agreements are generated after tender award.
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Agreement ID</TableHead>
-                      <TableHead>Lot</TableHead>
-                      <TableHead className="text-right">Grant Amount</TableHead>
-                      <TableHead className="text-right">Grant %</TableHead>
-                      <TableHead className="text-right">CAPEX Ceiling</TableHead>
-                      <TableHead>PBG Status</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Effective Date</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {agreements.map((a) => (
-                      <TableRow key={a.id}>
-                        <TableCell className="font-medium font-mono text-sm">{shortId(a.id)}</TableCell>
-                        <TableCell>{a.lot_id ? shortId(a.lot_id) : "—"}</TableCell>
-                        <TableCell className="text-right">{formatUSD(a.grant_amount_usd)}</TableCell>
-                        <TableCell className="text-right">{(a.grant_pct * 100).toFixed(0)}%</TableCell>
-                        <TableCell className="text-right">{formatUSD(a.eligible_capex_ceiling_usd)}</TableCell>
-                        <TableCell>
-                          <Badge className={PBG_COLORS[a.pbg_assignment_status] || "bg-gray-100 text-gray-700"}>
-                            {a.pbg_assignment_status?.replace(/_/g, " ") || "unknown"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={STATUS_COLORS[a.status] || "bg-gray-100 text-gray-700"}>
-                            {a.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {a.effective_date ? new Date(a.effective_date).toLocaleDateString() : "—"}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* ── Tab 2: Conditions Precedent ──────────────────────────────── */}
-        <TabsContent value="cps" className="mt-4">
-          <div className="grid gap-4 md:grid-cols-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-muted-foreground">Total CPs</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold">{cpTotal}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-muted-foreground">Verified</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold text-green-700">{cpVerified}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-muted-foreground">Pending / Submitted</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold text-amber-700">{cpPending + cpSubmitted}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-muted-foreground">Completion</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold">{cpCompletionPct.toFixed(0)}%</p>
-                <div className="mt-2 h-2 w-full rounded-full bg-gray-700">
-                  <div
-                    className="h-2 rounded-full bg-green-500 transition-all"
-                    style={{ width: `${cpCompletionPct}%` }}
-                  />
-                </div>
-              </CardContent>
-            </Card>
+      <div className="mt-2 rounded border border-border bg-white">
+        <div className="border-b border-border px-3 py-1.5">
+          <span className="text-[11px] font-semibold">Agreement Pipeline</span>
+        </div>
+        {isLoading ? (
+          <div className="p-4 text-center text-xs text-muted-foreground">
+            Loading...
           </div>
-
-          <div className="mt-4 grid gap-4 md:grid-cols-3">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-muted-foreground">Returned</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold text-amber-700">{cpReturned}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-muted-foreground">Waived</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold text-purple-600">{cpWaived}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-muted-foreground">Overdue</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold text-red-700">{cpOverdue}</p>
-              </CardContent>
-            </Card>
+        ) : rows.length === 0 ? (
+          <div className="p-6 text-center text-xs text-muted-foreground">
+            No grant agreements yet. Agreements are created after tender award
+            via the{" "}
+            <Link href="/evaluations" className="text-primary underline">
+              Evaluation
+            </Link>{" "}
+            step.
           </div>
-
-          <Card className="mt-4">
-            <CardHeader>
-              <CardTitle className="text-base">CP Status by Agreement</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {allCPs.length === 0 ? (
-                <div className="py-8 text-center text-muted-foreground">
-                  No conditions precedent recorded. CPs are attached to grant agreements.
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Agreement</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Title</TableHead>
-                      <TableHead>Owner</TableHead>
-                      <TableHead>Due Date</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Verified</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {allCPs.map((cp) => (
-                      <TableRow key={cp.id}>
-                        <TableCell className="font-mono text-sm">{cp.agreement_id_short}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{cp.cp_category?.replace(/_/g, " ") || "—"}</Badge>
-                        </TableCell>
-                        <TableCell className="font-medium">{cp.title}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {cp.owner_role?.replace(/_/g, " ") || "—"}
-                        </TableCell>
-                        <TableCell>
-                          {cp.due_date ? new Date(cp.due_date).toLocaleDateString() : "—"}
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={CP_STATUS_COLORS[cp.status] || "bg-gray-100 text-gray-700"}>
-                            {cp.status?.replace(/_/g, " ") || "unknown"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {cp.verified_at ? new Date(cp.verified_at).toLocaleDateString() : "—"}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="text-[10px]">
+                  <TableHead className="py-1.5">Lot Name</TableHead>
+                  <TableHead className="py-1.5">DisCo</TableHead>
+                  <TableHead className="py-1.5">Bid Review Notes</TableHead>
+                  <TableHead className="py-1.5">DARES Agreement</TableHead>
+                  <TableHead className="py-1.5">
+                    Conditions Precedent
+                  </TableHead>
+                  <TableHead className="py-1.5 text-right">Grant Secured</TableHead>
+                  <TableHead className="py-1.5">Estimated COD</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rows.map((row) => (
+                  <TableRow key={row.id} className="text-[12px]">
+                    <TableCell className="py-1 font-medium">
+                      {row.lotName}
+                    </TableCell>
+                    <TableCell className="py-1 font-mono text-[10px]">
+                      {row.disco}
+                    </TableCell>
+                    <TableCell className="py-1 max-w-[200px] truncate text-muted-foreground">
+                      {row.bidReviewNotes}
+                    </TableCell>
+                    <TableCell className="py-1">
+                      <span
+                        className={`inline-block rounded px-1.5 py-px text-[10px] font-medium ${
+                          STATUS_COLORS[row.agreementStatus] ??
+                          "bg-gray-100 text-gray-700"
+                        }`}
+                      >
+                        {formatLabel(row.agreementStatus)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-1">
+                      <span
+                        className={`text-[11px] font-medium ${
+                          CP_SUMMARY_COLORS[row.cpState] ??
+                          "text-muted-foreground"
+                        }`}
+                      >
+                        {row.cpSummary}
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-1 text-right font-mono text-[10px]">
+                      {row.grantAmountUsd > 0
+                        ? formatUSD(row.grantAmountUsd)
+                        : "—"}
+                    </TableCell>
+                    <TableCell className="py-1 font-mono text-[10px]">
+                      {row.estimatedCOD}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

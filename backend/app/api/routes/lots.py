@@ -61,6 +61,8 @@ class LotUpdate(BaseModel):
     grant_ceiling_pct: Optional[float] = None
     grant_ceiling_usd: Optional[float] = None
     evaluation_method: Optional[str] = None
+    site_count: Optional[int] = None
+    total_connections: Optional[int] = None
 
 
 class SiteIds(BaseModel):
@@ -198,6 +200,9 @@ def _lot_dict(lot: Lot, *, include_sites: bool = False) -> dict:
         "data_room_status": lot.data_room_status,
         "tender_status": lot.tender_status,
         "approval_to_tender": lot.approval_to_tender,
+        "disco_status": lot.disco_status or "pending",
+        "disco_notes": lot.disco_notes or "",
+        "data_pack_availed": lot.data_pack_availed or False,
         "approved_by": lot.approved_by,
         "approved_at": str(lot.approved_at) if lot.approved_at else None,
         "site_count": lot.site_count,
@@ -512,10 +517,11 @@ async def approve_lot_for_tender(
     if lot.approval_to_tender:
         raise HTTPException(400, "Lot already approved for tender")
 
-    if not lot.sites:
+    if not lot.sites and not lot.site_count:
         raise HTTPException(400, "Cannot approve lot with no sites")
 
     lot.approval_to_tender = True
+    lot.disco_status = "approved"
     lot.approved_by = auth.user_id
     lot.approved_at = utcnow()
     lot.tender_status = "approved"
@@ -529,6 +535,71 @@ async def approve_lot_for_tender(
         entity_id=lot.id,
     )
     db.add(audit)
+
+    await db.commit()
+    await db.refresh(lot)
+    return _lot_dict(lot)
+
+
+class RejectBody(BaseModel):
+    reason: str = ""
+
+
+@router.put("/lots/{lot_id}/reject")
+async def reject_lot(
+    lot_id: str,
+    body: RejectBody,
+    auth: AuthContext = Depends(require_module_write("tender")),
+    db: AsyncSession = Depends(get_db),
+):
+    """Reject a lot at DisCo interconnection review."""
+    result = await db.execute(select(Lot).where(Lot.id == lot_id))
+    lot = result.scalar_one_or_none()
+    if not lot:
+        raise HTTPException(404, "Lot not found")
+
+    lot.disco_status = "rejected"
+    lot.disco_notes = body.reason
+    lot.approval_to_tender = False
+
+    audit = AuditLog(
+        actor_id=auth.user_id,
+        actor_name=auth.name,
+        actor_role=auth.role,
+        action="lot_rejected_by_disco",
+        entity_type="lot",
+        entity_id=lot.id,
+        after_json={"reason": body.reason},
+    )
+    db.add(audit)
+
+    await db.commit()
+    await db.refresh(lot)
+    return _lot_dict(lot)
+
+
+class DiscoNotesBody(BaseModel):
+    disco_notes: Optional[str] = None
+    data_pack_availed: Optional[bool] = None
+
+
+@router.put("/lots/{lot_id}/disco-notes")
+async def update_disco_notes(
+    lot_id: str,
+    body: DiscoNotesBody,
+    auth: AuthContext = Depends(require_module_write("tender")),
+    db: AsyncSession = Depends(get_db),
+):
+    """Update DisCo notes and data pack status for a lot."""
+    result = await db.execute(select(Lot).where(Lot.id == lot_id))
+    lot = result.scalar_one_or_none()
+    if not lot:
+        raise HTTPException(404, "Lot not found")
+
+    if body.disco_notes is not None:
+        lot.disco_notes = body.disco_notes
+    if body.data_pack_availed is not None:
+        lot.data_pack_availed = body.data_pack_availed
 
     await db.commit()
     await db.refresh(lot)

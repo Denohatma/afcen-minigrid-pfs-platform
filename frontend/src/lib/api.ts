@@ -110,7 +110,11 @@ export const api = {
     removeSite: (lotId: string, siteId: string) =>
       request<void>(`/lots/${lotId}/sites/${siteId}`, { method: "DELETE" }),
     approve: (id: string) =>
-      request<{ ok: boolean }>(`/lots/${id}/approve`, { method: "PUT" }),
+      request<Lot>(`/lots/${id}/approve`, { method: "PUT" }),
+    reject: (id: string, reason: string) =>
+      request<Lot>(`/lots/${id}/reject`, { method: "PUT", body: JSON.stringify({ reason }) }),
+    updateDiscoNotes: (id: string, data: { disco_notes?: string; data_pack_availed?: boolean }) =>
+      request<Lot>(`/lots/${id}/disco-notes`, { method: "PUT", body: JSON.stringify(data) }),
     dataRoom: (lotId: string) =>
       request<DataRoom>(`/lots/${lotId}/data-room`),
     addDocument: (lotId: string, data: Partial<DataRoomDocument>) =>
