@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import {
   DISCO_COLORS,
@@ -8,6 +8,11 @@ import {
   TRANSMISSION_LINES,
 } from "@/lib/nigeria-geo";
 import { api } from "@/lib/api";
+
+const DIST_LINE_STYLES: Record<string, { color: string; weight: number; opacity: number; dashArray?: string }> = {
+  "33kV": { color: "#2196F3", weight: 1.8, opacity: 0.7 },
+  "11kV": { color: "#4CAF50", weight: 1.2, opacity: 0.6, dashArray: "4,3" },
+};
 
 interface Settlement {
   rank: number;
@@ -46,6 +51,7 @@ export function SettlementMap({
   const markersRef = useRef<L.LayerGroup | null>(null);
   const onToggleRef = useRef(onToggleSelect);
   onToggleRef.current = onToggleSelect;
+  const [distLineCounts, setDistLineCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -67,9 +73,19 @@ export function SettlementMap({
       { maxZoom: 19, attribution: "Esri" }
     );
 
+    const transmissionGroup = L.layerGroup().addTo(map);
+    const dist33Group = L.layerGroup().addTo(map);
+    const dist11Group = L.layerGroup();
+    const substationGroup = L.layerGroup().addTo(map);
+
     L.control.layers(
       { "Light": light, "Satellite": satellite },
-      {},
+      {
+        "330kV / 132kV Transmission": transmissionGroup,
+        "33kV Primary Distribution": dist33Group,
+        "11kV Secondary Distribution": dist11Group,
+        "Substations": substationGroup,
+      },
       { position: "topright", collapsed: true }
     ).addTo(map);
 
@@ -130,8 +146,62 @@ export function SettlementMap({
           `<span style="font-size:11px"><strong>${line.voltage}</strong> ${line.name.replace(line.voltage + " ", "")}</span>`,
           { sticky: true }
         )
-        .addTo(map);
+        .addTo(transmissionGroup);
     });
+
+    fetch("/distribution-lines.geojson")
+      .then((r) => r.json())
+      .then((geojson: GeoJSON.FeatureCollection) => {
+        if (!geojson?.features?.length) return;
+        const counts: Record<string, number> = {};
+        geojson.features.forEach((feature) => {
+          const voltage = (feature.properties?.voltage as string) || "unknown";
+          counts[voltage] = (counts[voltage] || 0) + 1;
+          const style = DIST_LINE_STYLES[voltage];
+          if (!style) return;
+          const coords = (feature.geometry as GeoJSON.LineString).coordinates;
+          const latLngs = coords.map((c) => [c[1], c[0]] as L.LatLngExpression);
+          const line = L.polyline(latLngs, style);
+          const name = feature.properties?.name || "";
+          const operator = feature.properties?.operator || "";
+          const label = name || operator || voltage;
+          line.bindTooltip(
+            `<span style="font-size:11px"><strong>${voltage}</strong>${label !== voltage ? ` ${label}` : ""}</span>`,
+            { sticky: true }
+          );
+          if (voltage === "33kV") {
+            line.addTo(dist33Group);
+          } else if (voltage === "11kV") {
+            line.addTo(dist11Group);
+          }
+        });
+        setDistLineCounts(counts);
+      })
+      .catch(() => {});
+
+    fetch("/substations.geojson")
+      .then((r) => r.json())
+      .then((geojson: GeoJSON.FeatureCollection) => {
+        if (!geojson?.features?.length) return;
+        geojson.features.forEach((feature) => {
+          const coords = (feature.geometry as GeoJSON.Point).coordinates;
+          const name = feature.properties?.name || "Substation";
+          const voltage = feature.properties?.voltage || "";
+          L.circleMarker([coords[1], coords[0]], {
+            radius: 5,
+            fillColor: "#FF9800",
+            color: "#E65100",
+            weight: 1.5,
+            fillOpacity: 0.8,
+          })
+            .bindTooltip(
+              `<span style="font-size:11px"><strong>${name}</strong>${voltage ? ` (${voltage})` : ""}</span>`,
+              { sticky: true }
+            )
+            .addTo(substationGroup);
+        });
+      })
+      .catch(() => {});
 
     mapRef.current = map;
     markersRef.current = L.layerGroup().addTo(map);
@@ -231,12 +301,37 @@ export function SettlementMap({
             />
             <span className="text-muted-foreground">132kV</span>
           </div>
+          <div className="flex items-center gap-2 text-xs">
+            <span className="h-[2px] w-3 bg-[#2196F3]" />
+            <span className="text-muted-foreground">
+              33kV{distLineCounts["33kV"] ? ` (${distLineCounts["33kV"].toLocaleString()})` : ""}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 text-xs">
+            <span
+              className="h-[2px] w-3"
+              style={{
+                backgroundImage:
+                  "repeating-linear-gradient(90deg,#4CAF50 0,#4CAF50 2px,transparent 2px,transparent 4px)",
+              }}
+            />
+            <span className="text-muted-foreground">
+              11kV{distLineCounts["11kV"] ? ` (${distLineCounts["11kV"].toLocaleString()})` : ""}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 text-xs">
+            <span className="h-2 w-2 rounded-full bg-[#FF9800] border border-[#E65100]" />
+            <span className="text-muted-foreground">Substation</span>
+          </div>
           <div className="my-0.5 border-t border-border" />
           <div className="flex items-center gap-2 text-xs">
             <span className="h-2.5 w-2.5 rounded-full bg-[#2E7D32]" />
             <span className="text-muted-foreground">Selected</span>
           </div>
         </div>
+        <p className="mt-1.5 text-[8px] text-muted-foreground leading-tight">
+          Distribution: KEDCO/World Bank NEAP 2016 + OSM
+        </p>
       </div>
       <style jsx global>{`
         .afcen-popup .leaflet-popup-content-wrapper {
