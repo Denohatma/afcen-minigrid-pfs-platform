@@ -75,7 +75,7 @@ export default function SitesPage() {
   const [maxGridDist, setMaxGridDist] = useState("");
   const [page, setPage] = useState(0);
   const [selectedRanks, setSelectedRanks] = useState<Set<number>>(new Set());
-  const [lotName, setLotName] = useState("");
+  const [lotSuffix, setLotSuffix] = useState("");
   const [showLotForm, setShowLotForm] = useState(false);
   const [creating, setCreating] = useState(false);
   const ps = 50;
@@ -137,12 +137,15 @@ export default function SitesPage() {
     };
   }, [settlements, selectedRanks]);
 
+  const lotPrefix = sel.disco ? `${sel.disco}-IMG-` : "";
+  const fullLotName = `${lotPrefix}${lotSuffix}`;
+
   const handleCreateLot = async () => {
-    if (!lotName.trim() || !sel.disco) return;
+    if (!lotSuffix.trim() || !sel.disco) return;
     setCreating(true);
     try {
       const lot = await api.lots.create({
-        lot_name: lotName.trim(),
+        lot_name: fullLotName,
         disco: sel.disco,
         state: sel.state,
       });
@@ -153,7 +156,7 @@ export default function SitesPage() {
       await queryClient.invalidateQueries({ queryKey: ["lots"] });
       setSelectedRanks(new Set());
       setShowLotForm(false);
-      setLotName("");
+      setLotSuffix("");
       router.push("/system-sizing");
     } catch (e) {
       alert("Failed to create lot. Please try again.");
@@ -187,24 +190,26 @@ export default function SitesPage() {
               {sel.discoCount > 1 ? (
                 <span className="text-[11px] text-amber-700">Select sites from one DisCo only</span>
               ) : (
-                <Button size="sm" className="h-6 px-2 text-[11px]" onClick={() => { setShowLotForm(true); setLotName(`${sel.disco} Lot — ${sel.n} sites`); }}>
-                  Create Lot →
+                <Button size="sm" className="h-6 px-2 text-[11px]" onClick={() => { setShowLotForm(true); setLotSuffix(""); }}>
+                  Proceed to Preliminary Sizing →
                 </Button>
               )}
             </>
           )}
           {showLotForm && (
             <div className="flex items-center gap-1.5">
+              <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] font-semibold text-primary">{lotPrefix}</span>
               <Input
-                value={lotName}
-                onChange={(e) => setLotName(e.target.value)}
+                value={lotSuffix}
+                onChange={(e) => setLotSuffix(e.target.value)}
                 placeholder="Lot name..."
-                className="h-6 w-48 text-[11px] px-1.5"
+                className="h-6 w-36 text-[11px] px-1.5"
                 onKeyDown={(e) => e.key === "Enter" && handleCreateLot()}
+                autoFocus
               />
-              <span className="text-[10px] text-muted-foreground">{sel.disco} &middot; {sel.n} sites</span>
-              <Button size="sm" className="h-6 px-2 text-[11px]" onClick={handleCreateLot} disabled={creating || !lotName.trim()}>
-                {creating ? "Creating..." : "Submit to DisCo →"}
+              <span className="text-[10px] text-muted-foreground">{sel.n} sites &middot; {fmt(sel.conn)} conn</span>
+              <Button size="sm" className="h-6 px-2 text-[11px]" onClick={handleCreateLot} disabled={creating || !lotSuffix.trim()}>
+                {creating ? "Creating..." : "Proceed to Sizing →"}
               </Button>
               <button className="text-[10px] text-muted-foreground underline" onClick={() => setShowLotForm(false)}>cancel</button>
             </div>
