@@ -17,33 +17,33 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 // ── Milestone status badges ─────────────────────────────────────────
 
 const MILESTONE_STATUS_COLORS: Record<string, string> = {
-  not_started: "bg-gray-100 text-gray-700",
-  submitted: "bg-blue-100 text-blue-700",
-  iva_verified: "bg-amber-100 text-amber-700",
+  not_started: "bg-gray-500/20 text-gray-300",
+  submitted: "bg-blue-500/20 text-blue-400",
+  iva_verified: "bg-amber-500/20 text-amber-400",
   rea_approved: "bg-indigo-100 text-indigo-700",
-  disbursed: "bg-green-100 text-green-700",
+  disbursed: "bg-emerald-500/20 text-emerald-400",
 };
 
 const APPROVAL_COLORS: Record<string, string> = {
-  not_started: "bg-gray-100 text-gray-600",
-  pending: "bg-gray-100 text-gray-600",
-  submitted: "bg-blue-100 text-blue-700",
-  in_progress: "bg-amber-100 text-amber-700",
-  verified: "bg-green-100 text-green-700",
-  approved: "bg-green-100 text-green-700",
-  passed: "bg-green-100 text-green-700",
-  failed: "bg-red-100 text-red-700",
-  rejected: "bg-red-100 text-red-700",
+  not_started: "bg-gray-500/20 text-gray-400",
+  pending: "bg-gray-500/20 text-gray-400",
+  submitted: "bg-blue-500/20 text-blue-400",
+  in_progress: "bg-amber-500/20 text-amber-400",
+  verified: "bg-emerald-500/20 text-emerald-400",
+  approved: "bg-emerald-500/20 text-emerald-400",
+  passed: "bg-emerald-500/20 text-emerald-400",
+  failed: "bg-red-500/20 text-red-400",
+  rejected: "bg-red-500/20 text-red-400",
 };
 
 // ── Disbursement payment status badges ──────────────────────────────
 
 const PAYMENT_STATUS_COLORS: Record<string, string> = {
-  pending: "bg-gray-100 text-gray-700",
-  iva_verified: "bg-amber-100 text-amber-700",
-  rea_approved: "bg-blue-100 text-blue-700",
+  pending: "bg-gray-500/20 text-gray-300",
+  iva_verified: "bg-amber-500/20 text-amber-400",
+  rea_approved: "bg-blue-500/20 text-blue-400",
   grant_admin_approved: "bg-indigo-100 text-indigo-700",
-  paid: "bg-green-100 text-green-700",
+  paid: "bg-emerald-500/20 text-emerald-400",
 };
 
 function formatUSD(amount: number) {
@@ -63,7 +63,7 @@ function formatLabel(s: string) {
 function ApprovalBadge({ value }: { value: string | null | undefined }) {
   const label = value ? formatLabel(value) : "pending";
   const color =
-    APPROVAL_COLORS[value || "pending"] || "bg-gray-100 text-gray-600";
+    APPROVAL_COLORS[value || "pending"] || "bg-gray-500/20 text-gray-400";
   return <Badge className={color}>{label}</Badge>;
 }
 
@@ -165,7 +165,7 @@ export default function DisbursementsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-blue-600">
+                <p className="text-2xl font-bold text-blue-400">
                   {submittedCount}
                 </p>
               </CardContent>
@@ -177,7 +177,7 @@ export default function DisbursementsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-amber-600">
+                <p className="text-2xl font-bold text-amber-400">
                   {verifiedCount}
                 </p>
               </CardContent>
@@ -201,7 +201,7 @@ export default function DisbursementsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-green-600">
+                <p className="text-2xl font-bold text-emerald-400">
                   {disbursedMsCount}
                 </p>
               </CardContent>
@@ -252,7 +252,7 @@ export default function DisbursementsPage() {
                           <Badge
                             className={
                               MILESTONE_STATUS_COLORS[m.status] ||
-                              "bg-gray-100 text-gray-700"
+                              "bg-gray-500/20 text-gray-300"
                             }
                           >
                             {formatLabel(m.status)}
@@ -295,7 +295,7 @@ export default function DisbursementsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-green-600">
+                <p className="text-2xl font-bold text-emerald-400">
                   {formatUSD(totalDisbursed)}
                 </p>
               </CardContent>
@@ -307,7 +307,7 @@ export default function DisbursementsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-amber-600">
+                <p className="text-2xl font-bold text-amber-400">
                   {formatUSD(totalPipeline)}
                 </p>
               </CardContent>
@@ -348,44 +348,44 @@ export default function DisbursementsPage() {
                           {/* 4-role approval chain */}
                           <TableCell>
                             {d.evidence_submitted_at ? (
-                              <Badge className="bg-green-100 text-green-700">
+                              <Badge className="bg-emerald-500/20 text-emerald-400">
                                 submitted
                               </Badge>
                             ) : (
-                              <Badge className="bg-gray-100 text-gray-600">
+                              <Badge className="bg-gray-500/20 text-gray-400">
                                 pending
                               </Badge>
                             )}
                           </TableCell>
                           <TableCell>
                             {d.iva_verified_at ? (
-                              <Badge className="bg-green-100 text-green-700">
+                              <Badge className="bg-emerald-500/20 text-emerald-400">
                                 verified
                               </Badge>
                             ) : (
-                              <Badge className="bg-gray-100 text-gray-600">
+                              <Badge className="bg-gray-500/20 text-gray-400">
                                 pending
                               </Badge>
                             )}
                           </TableCell>
                           <TableCell>
                             {d.rea_approved_at ? (
-                              <Badge className="bg-green-100 text-green-700">
+                              <Badge className="bg-emerald-500/20 text-emerald-400">
                                 approved
                               </Badge>
                             ) : (
-                              <Badge className="bg-gray-100 text-gray-600">
+                              <Badge className="bg-gray-500/20 text-gray-400">
                                 pending
                               </Badge>
                             )}
                           </TableCell>
                           <TableCell>
                             {d.grant_admin_approved_at ? (
-                              <Badge className="bg-green-100 text-green-700">
+                              <Badge className="bg-emerald-500/20 text-emerald-400">
                                 approved
                               </Badge>
                             ) : (
-                              <Badge className="bg-gray-100 text-gray-600">
+                              <Badge className="bg-gray-500/20 text-gray-400">
                                 pending
                               </Badge>
                             )}
@@ -396,7 +396,7 @@ export default function DisbursementsPage() {
                             <Badge
                               className={
                                 PAYMENT_STATUS_COLORS[d.payment_status] ||
-                                "bg-gray-100 text-gray-700"
+                                "bg-gray-500/20 text-gray-300"
                               }
                             >
                               {formatLabel(d.payment_status)}

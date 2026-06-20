@@ -26,28 +26,28 @@ const DISCO_OPTIONS = [
 ];
 
 const DATA_ROOM_COLORS: Record<string, string> = {
-  not_started: "bg-gray-100 text-gray-700",
-  in_progress: "bg-amber-100 text-amber-800",
-  complete: "bg-green-100 text-green-700",
+  not_started: "bg-gray-500/20 text-gray-300",
+  in_progress: "bg-amber-500/20 text-amber-400",
+  complete: "bg-emerald-500/20 text-emerald-400",
 };
 
 const TENDER_STATUS_COLORS: Record<string, string> = {
-  draft: "bg-gray-100 text-gray-700",
-  issued: "bg-blue-100 text-blue-700",
-  closed: "bg-amber-100 text-amber-800",
-  awarded: "bg-green-100 text-green-700",
+  draft: "bg-gray-500/20 text-gray-300",
+  issued: "bg-blue-500/20 text-blue-400",
+  closed: "bg-amber-500/20 text-amber-400",
+  awarded: "bg-emerald-500/20 text-emerald-400",
 };
 
 const QUALIFICATION_COLORS: Record<string, string> = {
-  pending: "bg-amber-100 text-amber-800",
-  approved: "bg-green-100 text-green-700",
-  rejected: "bg-red-100 text-red-700",
+  pending: "bg-amber-500/20 text-amber-400",
+  approved: "bg-emerald-500/20 text-emerald-400",
+  rejected: "bg-red-500/20 text-red-400",
 };
 
 const KYC_COLORS: Record<string, string> = {
-  pending: "bg-amber-100 text-amber-800",
-  verified: "bg-green-100 text-green-700",
-  failed: "bg-red-100 text-red-700",
+  pending: "bg-amber-500/20 text-amber-400",
+  verified: "bg-emerald-500/20 text-emerald-400",
+  failed: "bg-red-500/20 text-red-400",
 };
 
 function formatNum(n: number) {
@@ -257,7 +257,7 @@ export default function LotsPage() {
                           <Badge
                             className={`text-xs ${
                               DATA_ROOM_COLORS[lot.data_room_status] ??
-                              "bg-gray-100 text-gray-700"
+                              "bg-gray-500/20 text-gray-300"
                             }`}
                           >
                             {formatLabel(lot.data_room_status)}
@@ -267,7 +267,7 @@ export default function LotsPage() {
                           <Badge
                             className={`text-xs ${
                               TENDER_STATUS_COLORS[lot.tender_status] ??
-                              "bg-gray-100 text-gray-700"
+                              "bg-gray-500/20 text-gray-300"
                             }`}
                           >
                             {formatLabel(lot.tender_status)}
@@ -275,11 +275,11 @@ export default function LotsPage() {
                         </TableCell>
                         <TableCell>
                           {lot.approval_to_tender ? (
-                            <Badge className="text-xs bg-green-100 text-green-700">
+                            <Badge className="text-xs bg-emerald-500/20 text-emerald-400">
                               Yes
                             </Badge>
                           ) : (
-                            <Badge className="text-xs bg-gray-100 text-gray-600">
+                            <Badge className="text-xs bg-gray-500/20 text-gray-400">
                               No
                             </Badge>
                           )}
@@ -359,7 +359,7 @@ export default function LotsPage() {
                           <Badge
                             className={`text-xs ${
                               KYC_COLORS[bidder.kyc_status] ??
-                              "bg-gray-100 text-gray-700"
+                              "bg-gray-500/20 text-gray-300"
                             }`}
                           >
                             {formatLabel(bidder.kyc_status)}
@@ -369,7 +369,7 @@ export default function LotsPage() {
                           <Badge
                             className={`text-xs ${
                               QUALIFICATION_COLORS[bidder.qualification_status] ??
-                              "bg-gray-100 text-gray-700"
+                              "bg-gray-500/20 text-gray-300"
                             }`}
                           >
                             {formatLabel(bidder.qualification_status)}

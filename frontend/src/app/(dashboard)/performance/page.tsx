@@ -92,7 +92,7 @@ export default function PerformancePage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold text-green-600">
+              <p className="text-2xl font-bold text-emerald-400">
                 {formatPct(stats.avg_availability_pct ?? 0)}
               </p>
             </CardContent>
@@ -104,7 +104,7 @@ export default function PerformancePage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold text-amber-600">
+              <p className="text-2xl font-bold text-amber-400">
                 {formatPct(stats.avg_collection_rate_pct ?? 0)}
               </p>
             </CardContent>
@@ -178,10 +178,10 @@ export default function PerformancePage() {
                           <span
                             className={
                               r.availability_pct >= 90
-                                ? "text-green-600"
+                                ? "text-emerald-400"
                                 : r.availability_pct >= 70
-                                ? "text-amber-600"
-                                : "text-red-600"
+                                ? "text-amber-400"
+                                : "text-red-400"
                             }
                           >
                             {formatPct(r.availability_pct)}
@@ -191,10 +191,10 @@ export default function PerformancePage() {
                           <span
                             className={
                               r.collection_rate_pct >= 85
-                                ? "text-green-600"
+                                ? "text-emerald-400"
                                 : r.collection_rate_pct >= 60
-                                ? "text-amber-600"
-                                : "text-red-600"
+                                ? "text-amber-400"
+                                : "text-red-400"
                             }
                           >
                             {formatPct(r.collection_rate_pct)}
@@ -255,10 +255,10 @@ export default function PerformancePage() {
                           <Badge
                             className={`text-xs ${
                               report.status === "final"
-                                ? "bg-green-100 text-green-700"
+                                ? "bg-emerald-500/20 text-emerald-400"
                                 : report.status === "locked"
-                                ? "bg-blue-100 text-blue-700"
-                                : "bg-gray-100 text-gray-600"
+                                ? "bg-blue-500/20 text-blue-400"
+                                : "bg-gray-500/20 text-gray-400"
                             }`}
                           >
                             {report.status}

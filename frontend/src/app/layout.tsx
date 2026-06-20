@@ -1,20 +1,19 @@
 import type { Metadata } from "next";
-import { Geist_Mono } from "next/font/google";
-import { Montserrat, Lato } from "next/font/google";
+import { Geist_Mono, Inter } from "next/font/google";
 import { Toaster } from "sonner";
 import { Providers } from "./providers";
 import "./globals.css";
 
-const montserrat = Montserrat({
-  variable: "--font-heading",
-  subsets: ["latin"],
-  weight: ["500", "600", "700", "800"],
-});
-
-const lato = Lato({
+const inter = Inter({
   variable: "--font-sans",
   subsets: ["latin"],
-  weight: ["300", "400", "700"],
+  weight: ["300", "400", "500", "600", "700", "800"],
+});
+
+const interHeading = Inter({
+  variable: "--font-heading",
+  subsets: ["latin"],
+  weight: ["600", "700", "800"],
 });
 
 const geistMono = Geist_Mono({
@@ -43,7 +42,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${montserrat.variable} ${lato.variable} ${geistMono.variable} h-full antialiased`}
+      className={`dark ${inter.variable} ${interHeading.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background">
         <Providers>{children}</Providers>

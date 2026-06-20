@@ -19,37 +19,37 @@ import {
 /* ── Status badge colour maps ─────────────────────────────────────── */
 
 const TENDER_STATUS_COLORS: Record<string, string> = {
-  draft: "bg-gray-100 text-gray-700",
-  issued: "bg-green-100 text-green-700",
-  open: "bg-green-100 text-green-700",
-  closed: "bg-amber-100 text-amber-700",
-  under_evaluation: "bg-blue-100 text-blue-700",
+  draft: "bg-gray-500/20 text-gray-300",
+  issued: "bg-emerald-500/20 text-emerald-400",
+  open: "bg-emerald-500/20 text-emerald-400",
+  closed: "bg-amber-500/20 text-amber-400",
+  under_evaluation: "bg-blue-500/20 text-blue-400",
   awarded: "bg-primary text-white",
 };
 
 const EVAL_STATUS_COLORS: Record<string, string> = {
-  pending: "bg-gray-100 text-gray-700",
-  "in progress": "bg-blue-100 text-blue-700",
-  complete: "bg-green-100 text-green-700",
+  pending: "bg-gray-500/20 text-gray-300",
+  "in progress": "bg-blue-500/20 text-blue-400",
+  complete: "bg-emerald-500/20 text-emerald-400",
   admin_check: "bg-yellow-100 text-yellow-700",
-  technical: "bg-blue-100 text-blue-700",
+  technical: "bg-blue-500/20 text-blue-400",
   financial: "bg-indigo-100 text-indigo-700",
   recommended: "bg-emerald-100 text-emerald-700",
 };
 
 const NO_OBJECTION_COLORS: Record<string, string> = {
-  not_submitted: "bg-gray-100 text-gray-700",
-  draft: "bg-gray-100 text-gray-700",
+  not_submitted: "bg-gray-500/20 text-gray-300",
+  draft: "bg-gray-500/20 text-gray-300",
   submitted: "bg-yellow-100 text-yellow-700",
-  approved: "bg-green-100 text-green-700",
-  rejected: "bg-red-100 text-red-700",
+  approved: "bg-emerald-500/20 text-emerald-400",
+  rejected: "bg-red-500/20 text-red-400",
 };
 
 const FLAG_SEVERITY_COLORS: Record<string, string> = {
-  none: "bg-green-100 text-green-700",
+  none: "bg-emerald-500/20 text-emerald-400",
   low: "bg-yellow-100 text-yellow-700",
   medium: "bg-orange-100 text-orange-700",
-  high: "bg-red-100 text-red-700",
+  high: "bg-red-500/20 text-red-400",
 };
 
 /* ── Helpers ──────────────────────────────────────────────────────── */
@@ -130,7 +130,7 @@ export default function EvaluationsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-blue-600">
+            <p className="text-2xl font-bold text-blue-400">
               {underEval.length}
             </p>
           </CardContent>
@@ -142,7 +142,7 @@ export default function EvaluationsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-green-600">
+            <p className="text-2xl font-bold text-emerald-400">
               {awarded.length}
             </p>
           </CardContent>
@@ -217,7 +217,7 @@ export default function EvaluationsPage() {
                           <Badge
                             className={
                               TENDER_STATUS_COLORS[tenderStatus] ||
-                              "bg-gray-100 text-gray-700"
+                              "bg-gray-500/20 text-gray-300"
                             }
                           >
                             {tenderStatusLabel(lot)}
@@ -235,7 +235,7 @@ export default function EvaluationsPage() {
                           <Badge
                             className={
                               EVAL_STATUS_COLORS[evalStatus] ||
-                              "bg-gray-100 text-gray-700"
+                              "bg-gray-500/20 text-gray-300"
                             }
                           >
                             {evalStatus}
@@ -254,7 +254,7 @@ export default function EvaluationsPage() {
                           <Badge
                             className={
                               NO_OBJECTION_COLORS["approved"] ||
-                              "bg-green-100 text-green-700"
+                              "bg-emerald-500/20 text-emerald-400"
                             }
                           >
                             approved

@@ -26,10 +26,10 @@ const STATUS_OPTIONS = [
 ];
 
 const STATUS_COLORS: Record<string, string> = {
-  not_started: "bg-gray-100 text-gray-700",
-  in_progress: "bg-amber-100 text-amber-800",
-  verified: "bg-green-100 text-green-700",
-  flagged: "bg-red-100 text-red-700",
+  not_started: "bg-gray-500/20 text-gray-300",
+  in_progress: "bg-amber-500/20 text-amber-400",
+  verified: "bg-emerald-500/20 text-emerald-400",
+  flagged: "bg-red-500/20 text-red-400",
 };
 
 function statusLabel(status: string) {
@@ -120,7 +120,7 @@ export default function DiscoReadinessPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold text-green-600">
+              <p className="text-2xl font-bold text-emerald-400">
                 {stats.verified ?? 0}
               </p>
             </CardContent>
@@ -144,7 +144,7 @@ export default function DiscoReadinessPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold text-amber-600">
+              <p className="text-2xl font-bold text-amber-400">
                 {stats.in_progress ?? 0}
               </p>
             </CardContent>
@@ -166,7 +166,7 @@ export default function DiscoReadinessPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold text-red-600">
+              <p className="text-2xl font-bold text-red-400">
                 {stats.flagged ?? 0}
               </p>
             </CardContent>
@@ -252,7 +252,7 @@ export default function DiscoReadinessPage() {
                         <Badge
                           className={`text-xs ${
                             STATUS_COLORS[r.feeder_data_status] ??
-                            "bg-gray-100 text-gray-700"
+                            "bg-gray-500/20 text-gray-300"
                           }`}
                         >
                           {statusLabel(r.feeder_data_status)}
@@ -262,7 +262,7 @@ export default function DiscoReadinessPage() {
                         <Badge
                           className={`text-xs ${
                             STATUS_COLORS[r.poi_status] ??
-                            "bg-gray-100 text-gray-700"
+                            "bg-gray-500/20 text-gray-300"
                           }`}
                         >
                           {statusLabel(r.poi_status)}
@@ -272,7 +272,7 @@ export default function DiscoReadinessPage() {
                         <Badge
                           className={`text-xs ${
                             STATUS_COLORS[r.bulk_meter_status] ??
-                            "bg-gray-100 text-gray-700"
+                            "bg-gray-500/20 text-gray-300"
                           }`}
                         >
                           {statusLabel(r.bulk_meter_status)}
@@ -282,7 +282,7 @@ export default function DiscoReadinessPage() {
                         <Badge
                           className={`text-xs ${
                             STATUS_COLORS[r.customer_data_status] ??
-                            "bg-gray-100 text-gray-700"
+                            "bg-gray-500/20 text-gray-300"
                           }`}
                         >
                           {statusLabel(r.customer_data_status)}
@@ -292,7 +292,7 @@ export default function DiscoReadinessPage() {
                         <Badge
                           className={`text-xs ${
                             STATUS_COLORS[r.settlement_terms_status] ??
-                            "bg-gray-100 text-gray-700"
+                            "bg-gray-500/20 text-gray-300"
                           }`}
                         >
                           {statusLabel(r.settlement_terms_status)}
@@ -302,7 +302,7 @@ export default function DiscoReadinessPage() {
                         <Badge
                           className={`text-xs ${
                             STATUS_COLORS[r.tripartite_status] ??
-                            "bg-gray-100 text-gray-700"
+                            "bg-gray-500/20 text-gray-300"
                           }`}
                         >
                           {statusLabel(r.tripartite_status)}
@@ -312,7 +312,7 @@ export default function DiscoReadinessPage() {
                         <Badge
                           className={`text-xs ${
                             STATUS_COLORS[r.overall_status] ??
-                            "bg-gray-100 text-gray-700"
+                            "bg-gray-500/20 text-gray-300"
                           }`}
                         >
                           {statusLabel(r.overall_status)}

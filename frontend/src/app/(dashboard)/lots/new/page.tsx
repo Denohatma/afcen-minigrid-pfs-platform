@@ -76,7 +76,7 @@ export default function CreateLotPage() {
       </p>
 
       {error && (
-        <div className="mt-4 rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+        <div className="mt-4 rounded-md bg-red-500/10 border border-red-500/30 p-3 text-sm text-red-400">
           {error}
         </div>
       )}

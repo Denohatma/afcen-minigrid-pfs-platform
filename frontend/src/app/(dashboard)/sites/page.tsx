@@ -1,8 +1,9 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { api } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,19 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+const SettlementMap = dynamic(
+  () =>
+    import("@/components/settlement-map").then((m) => m.SettlementMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-full items-center justify-center bg-card text-muted-foreground">
+        Loading map...
+      </div>
+    ),
+  }
+);
+
 const DISCO_OPTIONS = [
   { value: "", label: "All DisCos" },
   { value: "AEDC", label: "AEDC (Abuja/FCT)" },
@@ -34,16 +48,28 @@ const MG_TYPE_OPTIONS = [
 ];
 
 const BAND_COLORS: Record<string, string> = {
-  interconnected: "bg-amber-100 text-amber-800",
-  undergrid: "bg-orange-100 text-orange-800",
-  isolated: "bg-red-100 text-red-800",
+  interconnected: "bg-amber-500/20 text-amber-400",
+  undergrid: "bg-orange-500/20 text-orange-400",
+  isolated: "bg-red-500/20 text-red-400",
 };
 
 const RISK_COLORS: Record<string, string> = {
-  low: "bg-green-100 text-green-700",
-  medium: "bg-amber-100 text-amber-700",
-  high: "bg-red-100 text-red-700",
+  low: "bg-emerald-500/20 text-emerald-400",
+  medium: "bg-amber-500/20 text-amber-400",
+  high: "bg-red-500/20 text-red-400",
 };
+
+const SCORING_CRITERIA = [
+  { name: "Population density", weight: 20, icon: "👥" },
+  { name: "Grid distance", weight: 15, icon: "⚡" },
+  { name: "Demand projection", weight: 15, icon: "📊" },
+  { name: "Solar resource (GHI)", weight: 10, icon: "☀️" },
+  { name: "Health facilities", weight: 10, icon: "🏥" },
+  { name: "Education facilities", weight: 10, icon: "🏫" },
+  { name: "Security risk (inverse)", weight: 10, icon: "🛡️" },
+  { name: "Existing connections", weight: 5, icon: "🔌" },
+  { name: "Revenue potential", weight: 5, icon: "💰" },
+];
 
 function formatNum(n: number) {
   return new Intl.NumberFormat("en-US").format(n);
@@ -57,6 +83,7 @@ export default function SitesPage() {
   const [maxGridDist, setMaxGridDist] = useState("");
   const [page, setPage] = useState(0);
   const [selectedRanks, setSelectedRanks] = useState<Set<number>>(new Set());
+  const [discoRequest, setDiscoRequest] = useState<string | null>(null);
   const pageSize = 50;
 
   const params: Record<string, string | number> = {
@@ -87,16 +114,17 @@ export default function SitesPage() {
   const settlements = data?.settlements ?? [];
   const total = data?.total ?? 0;
   const totalPages = Math.ceil(total / pageSize);
-  const assessedSites: Array<Record<string, any>> = (sitesData?.items ?? []) as any;
+  const assessedSites: Array<Record<string, any>> = (sitesData?.items ??
+    []) as any;
 
-  const toggleSelect = (rank: number) => {
+  const toggleSelect = useCallback((rank: number) => {
     setSelectedRanks((prev) => {
       const next = new Set(prev);
       if (next.has(rank)) next.delete(rank);
       else next.add(rank);
       return next;
     });
-  };
+  }, []);
 
   const selectAll = () => {
     if (selectedRanks.size === settlements.length) {
@@ -115,6 +143,16 @@ export default function SitesPage() {
     setPage(0);
   };
 
+  const selectedSummary = useMemo(() => {
+    const selected = settlements.filter((s) => selectedRanks.has(s.rank));
+    return {
+      count: selectedRanks.size,
+      connections: selected.reduce((sum, s) => sum + s.connections, 0),
+      demand: Math.round(selected.reduce((sum, s) => sum + s.demand_kwh, 0)),
+      population: selected.reduce((sum, s) => sum + s.population, 0),
+    };
+  }, [settlements, selectedRanks]);
+
   return (
     <div>
       <div className="flex items-center justify-between">
@@ -122,14 +160,14 @@ export default function SitesPage() {
           <h1 className="font-heading text-2xl font-bold">
             Site Registry & Selection
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="mt-1 text-sm text-muted-foreground">
             Browse, filter, and select candidate minigrid sites across DisCo
             franchise areas
           </p>
         </div>
         <div className="flex gap-2">
           {selectedRanks.size > 0 && (
-            <Badge variant="outline" className="text-sm py-1 px-3">
+            <Badge variant="outline" className="px-3 py-1 text-sm">
               {selectedRanks.size} selected
             </Badge>
           )}
@@ -176,14 +214,173 @@ export default function SitesPage() {
                 <p className="text-2xl font-bold">
                   {formatNum(stats.by_disco?.[d]?.total ?? 0)}
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Pop: {formatNum(stats.by_disco?.[d]?.total_population ?? 0)} | Score:{" "}
-                  {stats.by_disco?.[d]?.avg_score ?? 0}
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Pop: {formatNum(stats.by_disco?.[d]?.total_population ?? 0)} |
+                  Score: {stats.by_disco?.[d]?.avg_score ?? 0}
                 </p>
               </CardContent>
             </Card>
           ))}
         </div>
+      )}
+
+      {/* Map + Scoring Criteria Side-by-Side */}
+      <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_280px]">
+        {/* Map */}
+        <Card className="overflow-hidden">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm">
+                DisCo Coverage Map
+                <span className="ml-2 text-xs font-normal text-muted-foreground">
+                  Click markers to select sites for lot creation
+                </span>
+              </CardTitle>
+              {selectedRanks.size > 0 && (
+                <Badge className="bg-emerald-500/20 text-emerald-400">
+                  {selectedRanks.size} selected on map
+                </Badge>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="h-[420px]">
+              <SettlementMap
+                settlements={settlements}
+                selectedRanks={selectedRanks}
+                onToggleSelect={toggleSelect}
+                activeDisco={disco}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Scoring Criteria Sidebar */}
+        <div className="flex flex-col gap-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">PFS Scoring Criteria</CardTitle>
+              <p className="text-xs text-muted-foreground">
+                Weighted composite score (max 100)
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {SCORING_CRITERIA.map((c) => (
+                <div key={c.name} className="flex items-center gap-2">
+                  <span className="w-5 text-center text-xs">{c.icon}</span>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs">{c.name}</span>
+                      <span className="text-xs font-semibold text-primary">
+                        {c.weight}%
+                      </span>
+                    </div>
+                    <div className="mt-0.5 h-1.5 rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full bg-primary/70"
+                        style={{ width: `${c.weight * 5}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          {/* DisCo Data Request */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">DisCo Data Request</CardTitle>
+              <p className="text-xs text-muted-foreground">
+                Request site approval & data sharing
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {discoRequest ? (
+                <div className="rounded-md border border-emerald-500/30 bg-emerald-500/10 p-3">
+                  <p className="text-xs font-medium text-emerald-400">
+                    Request sent to {discoRequest}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Awaiting approval for {selectedRanks.size} sites. Data will
+                    be shared with bidders upon approval.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2 h-7 text-xs"
+                    onClick={() => setDiscoRequest(null)}
+                  >
+                    Reset
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <p className="text-xs text-muted-foreground">
+                    Select sites on the map, then request the DisCo to approve
+                    and share network data with bidders.
+                  </p>
+                  <Button
+                    size="sm"
+                    className="w-full"
+                    disabled={selectedRanks.size === 0}
+                    onClick={() => {
+                      const targetDisco =
+                        disco ||
+                        settlements.find((s) => selectedRanks.has(s.rank))
+                          ?.disco ||
+                        "DisCo";
+                      setDiscoRequest(targetDisco);
+                    }}
+                  >
+                    {selectedRanks.size > 0
+                      ? `Request ${disco || "DisCo"} Approval`
+                      : "Select sites first"}
+                  </Button>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Selection Tray */}
+      {selectedRanks.size > 0 && (
+        <Card className="mt-4 border-primary/30 bg-primary/5">
+          <CardContent className="pt-4">
+            <div className="flex items-center justify-between">
+              <div className="flex gap-6 text-sm">
+                <span>
+                  <strong>{selectedSummary.count}</strong> sites selected
+                </span>
+                <span className="text-muted-foreground">
+                  Pop:{" "}
+                  <strong>{formatNum(selectedSummary.population)}</strong>
+                </span>
+                <span className="text-muted-foreground">
+                  Connections:{" "}
+                  <strong>{formatNum(selectedSummary.connections)}</strong>
+                </span>
+                <span className="text-muted-foreground">
+                  Demand:{" "}
+                  <strong>{formatNum(selectedSummary.demand)} kWh/day</strong>
+                </span>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedRanks(new Set())}
+                >
+                  Clear
+                </Button>
+                <Link href="/lots">
+                  <Button size="sm">Create Lot →</Button>
+                </Link>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       <Tabs defaultValue="registry" className="mt-6">
@@ -287,56 +484,6 @@ export default function SitesPage() {
             </CardContent>
           </Card>
 
-          {/* Selection Tray */}
-          {selectedRanks.size > 0 && (
-            <Card className="mb-4 border-primary/30 bg-primary/5">
-              <CardContent className="pt-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex gap-6 text-sm">
-                    <span>
-                      <strong>{selectedRanks.size}</strong> sites selected
-                    </span>
-                    <span className="text-muted-foreground">
-                      Est. connections:{" "}
-                      <strong>
-                        {formatNum(
-                          settlements
-                            .filter((s) => selectedRanks.has(s.rank))
-                            .reduce((sum, s) => sum + s.connections, 0)
-                        )}
-                      </strong>
-                    </span>
-                    <span className="text-muted-foreground">
-                      Est. demand:{" "}
-                      <strong>
-                        {formatNum(
-                          Math.round(
-                            settlements
-                              .filter((s) => selectedRanks.has(s.rank))
-                              .reduce((sum, s) => sum + s.demand_kwh, 0)
-                          )
-                        )}{" "}
-                        kWh/day
-                      </strong>
-                    </span>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSelectedRanks(new Set())}
-                    >
-                      Clear
-                    </Button>
-                    <Link href="/lots">
-                      <Button size="sm">Create Lot</Button>
-                    </Link>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
           {/* Table */}
           <Card>
             <CardContent className="p-0">
@@ -410,7 +557,7 @@ export default function SitesPage() {
                           </TableCell>
                           <TableCell>
                             <div className="font-medium">{s.village}</div>
-                            <div className="text-xs text-muted-foreground flex gap-2 mt-0.5">
+                            <div className="mt-0.5 flex gap-2 text-xs text-muted-foreground">
                               {s.has_health && (
                                 <span title="Health facility">🏥</span>
                               )}
@@ -429,7 +576,7 @@ export default function SitesPage() {
                           <TableCell>
                             <Badge
                               variant="outline"
-                              className="text-xs font-mono"
+                              className="font-mono text-xs"
                             >
                               {s.disco}
                             </Badge>
@@ -450,7 +597,7 @@ export default function SitesPage() {
                             <Badge
                               className={`text-xs ${
                                 BAND_COLORS[s.recommended_mg_type] ??
-                                "bg-gray-100 text-gray-700"
+                                "bg-gray-500/20 text-gray-300"
                               }`}
                             >
                               {s.recommended_mg_type}
@@ -460,10 +607,10 @@ export default function SitesPage() {
                             <span
                               className={`font-mono text-sm font-semibold ${
                                 s.score >= 70
-                                  ? "text-green-600"
+                                  ? "text-emerald-400"
                                   : s.score >= 50
-                                  ? "text-amber-600"
-                                  : "text-red-600"
+                                    ? "text-amber-400"
+                                    : "text-red-400"
                               }`}
                             >
                               {s.score.toFixed(1)}
@@ -473,7 +620,7 @@ export default function SitesPage() {
                             <Badge
                               className={`text-xs ${
                                 RISK_COLORS[s.security_risk] ??
-                                "bg-gray-100 text-gray-700"
+                                "bg-gray-500/20 text-gray-300"
                               }`}
                             >
                               {s.security_risk}
@@ -569,10 +716,10 @@ export default function SitesPage() {
                           <Badge
                             className={`text-xs ${
                               site.status === "completed"
-                                ? "bg-green-100 text-green-700"
+                                ? "bg-emerald-500/20 text-emerald-400"
                                 : site.status === "running"
-                                ? "bg-blue-100 text-blue-700"
-                                : "bg-gray-100 text-gray-600"
+                                  ? "bg-blue-500/20 text-blue-400"
+                                  : "bg-gray-500/20 text-gray-400"
                             }`}
                           >
                             {site.status || "draft"}

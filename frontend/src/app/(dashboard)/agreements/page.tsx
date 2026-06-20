@@ -8,24 +8,24 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const STATUS_COLORS: Record<string, string> = {
-  draft: "bg-gray-100 text-gray-700",
-  pending: "bg-amber-100 text-amber-700",
-  active: "bg-green-100 text-green-700",
-  terminated: "bg-red-100 text-red-700",
+  draft: "bg-gray-500/20 text-gray-300",
+  pending: "bg-amber-500/20 text-amber-400",
+  active: "bg-emerald-500/20 text-emerald-400",
+  terminated: "bg-red-500/20 text-red-400",
 };
 
 const PBG_COLORS: Record<string, string> = {
-  not_assigned: "bg-gray-100 text-gray-700",
-  assigned: "bg-green-100 text-green-700",
+  not_assigned: "bg-gray-500/20 text-gray-300",
+  assigned: "bg-emerald-500/20 text-emerald-400",
 };
 
 const CP_STATUS_COLORS: Record<string, string> = {
-  pending: "bg-gray-100 text-gray-700",
-  submitted: "bg-blue-100 text-blue-700",
-  verified: "bg-green-100 text-green-700",
-  returned: "bg-amber-100 text-amber-700",
+  pending: "bg-gray-500/20 text-gray-300",
+  submitted: "bg-blue-500/20 text-blue-400",
+  verified: "bg-emerald-500/20 text-emerald-400",
+  returned: "bg-amber-500/20 text-amber-400",
   waived: "bg-purple-100 text-purple-700",
-  overdue: "bg-red-100 text-red-700",
+  overdue: "bg-red-500/20 text-red-400",
 };
 
 function formatUSD(amount: number) {
@@ -108,7 +108,7 @@ export default function AgreementsPage() {
                 <CardTitle className="text-sm text-muted-foreground">Active</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-green-600">{activeCount}</p>
+                <p className="text-2xl font-bold text-emerald-400">{activeCount}</p>
               </CardContent>
             </Card>
             <Card>
@@ -124,7 +124,7 @@ export default function AgreementsPage() {
                 <CardTitle className="text-sm text-muted-foreground">Ringfenced</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-amber-600">{formatUSD(totalRingfenced)}</p>
+                <p className="text-2xl font-bold text-amber-400">{formatUSD(totalRingfenced)}</p>
               </CardContent>
             </Card>
           </div>
@@ -158,12 +158,12 @@ export default function AgreementsPage() {
                         <TableCell className="text-right">{(a.grant_pct * 100).toFixed(0)}%</TableCell>
                         <TableCell className="text-right">{formatUSD(a.eligible_capex_ceiling_usd)}</TableCell>
                         <TableCell>
-                          <Badge className={PBG_COLORS[a.pbg_assignment_status] || "bg-gray-100 text-gray-700"}>
+                          <Badge className={PBG_COLORS[a.pbg_assignment_status] || "bg-gray-500/20 text-gray-300"}>
                             {a.pbg_assignment_status?.replace(/_/g, " ") || "unknown"}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge className={STATUS_COLORS[a.status] || "bg-gray-100 text-gray-700"}>
+                          <Badge className={STATUS_COLORS[a.status] || "bg-gray-500/20 text-gray-300"}>
                             {a.status}
                           </Badge>
                         </TableCell>
@@ -195,7 +195,7 @@ export default function AgreementsPage() {
                 <CardTitle className="text-sm text-muted-foreground">Verified</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-green-600">{cpVerified}</p>
+                <p className="text-2xl font-bold text-emerald-400">{cpVerified}</p>
               </CardContent>
             </Card>
             <Card>
@@ -203,7 +203,7 @@ export default function AgreementsPage() {
                 <CardTitle className="text-sm text-muted-foreground">Pending / Submitted</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-amber-600">{cpPending + cpSubmitted}</p>
+                <p className="text-2xl font-bold text-amber-400">{cpPending + cpSubmitted}</p>
               </CardContent>
             </Card>
             <Card>
@@ -212,7 +212,7 @@ export default function AgreementsPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-2xl font-bold">{cpCompletionPct.toFixed(0)}%</p>
-                <div className="mt-2 h-2 w-full rounded-full bg-gray-200">
+                <div className="mt-2 h-2 w-full rounded-full bg-gray-700">
                   <div
                     className="h-2 rounded-full bg-green-500 transition-all"
                     style={{ width: `${cpCompletionPct}%` }}
@@ -228,7 +228,7 @@ export default function AgreementsPage() {
                 <CardTitle className="text-sm text-muted-foreground">Returned</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-amber-600">{cpReturned}</p>
+                <p className="text-2xl font-bold text-amber-400">{cpReturned}</p>
               </CardContent>
             </Card>
             <Card>
@@ -244,7 +244,7 @@ export default function AgreementsPage() {
                 <CardTitle className="text-sm text-muted-foreground">Overdue</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-red-600">{cpOverdue}</p>
+                <p className="text-2xl font-bold text-red-400">{cpOverdue}</p>
               </CardContent>
             </Card>
           </div>
@@ -286,7 +286,7 @@ export default function AgreementsPage() {
                           {cp.due_date ? new Date(cp.due_date).toLocaleDateString() : "—"}
                         </TableCell>
                         <TableCell>
-                          <Badge className={CP_STATUS_COLORS[cp.status] || "bg-gray-100 text-gray-700"}>
+                          <Badge className={CP_STATUS_COLORS[cp.status] || "bg-gray-500/20 text-gray-300"}>
                             {cp.status?.replace(/_/g, " ") || "unknown"}
                           </Badge>
                         </TableCell>
