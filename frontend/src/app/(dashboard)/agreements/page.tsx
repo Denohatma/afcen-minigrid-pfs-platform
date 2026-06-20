@@ -91,7 +91,7 @@ export default function AgreementsPage() {
     const lot = lotsById[ag.lot_id];
     const cps = ag.cps || [];
     const cpVerified = cps.filter(
-      (cp) => cp.status === "verified" || cp.status === "waived"
+      (cp: { status: string }) => cp.status === "verified" || cp.status === "waived"
     ).length;
     const cpTotal = cps.length;
 
