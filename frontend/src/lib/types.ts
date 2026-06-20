@@ -340,10 +340,12 @@ export interface Milestone {
   id: string;
   grant_agreement_id: string;
   site_id: string | null;
+  milestone_number: number;
   milestone_type: string;
   title: string;
   description: string;
   tranche_pct: number;
+  tranche_amount_usd: number;
   grant_amount_usd: number;
   evidence: Record<string, unknown>;
   iva_status: string;
@@ -353,6 +355,9 @@ export interface Milestone {
   submitted_at: string | null;
   verified_at: string | null;
   approved_at: string | null;
+  disbursed_at: string | null;
+  disbursement_reference: string | null;
+  rejection_reason: string | null;
   status: string;
   created_at: string;
   disbursement?: Disbursement | null;
@@ -444,7 +449,7 @@ export interface GrievanceComment {
   created_at: string;
 }
 
-// ── Module 11: Settlement Ledger ────────────────────────────────────
+// ── Module 11: Settlement Ledger (Invoice-based) ────────────────────
 
 export interface SettlementLedgerEntry {
   id: string;
@@ -463,6 +468,127 @@ export interface SettlementLedgerEntry {
   dispute_reason: string | null;
   payment_status: string;
   created_at: string;
+}
+
+export interface SettlementInvoice {
+  id: string;
+  invoice_ref: string;
+  site_id: string | null;
+  site_name: string;
+  award_id: string | null;
+  disco_name: string;
+  developer_id: string | null;
+  developer_name: string;
+  invoice_type: string;
+  direction: string;
+  billing_period: string;
+  amount_usd: number;
+  amount_ngn: number | null;
+  exchange_rate: number | null;
+  kwh_quantity: number | null;
+  rate_per_kwh: number | null;
+  bulk_meter_reading_start: number | null;
+  bulk_meter_reading_end: number | null;
+  bulk_meter_id: string | null;
+  status: string;
+  amount_paid_usd: number | null;
+  amount_outstanding_usd: number;
+  issued_date: string | null;
+  due_date: string | null;
+  paid_date: string | null;
+  payment_reference: string | null;
+  issuer_role: string | null;
+  notes: string | null;
+  dispute_reason: string | null;
+  dispute_raised_at: string | null;
+  dispute_resolved_at: string | null;
+  dispute_resolution_note: string | null;
+  escalated_at: string | null;
+  escalation_note: string | null;
+  linked_ticket_id: string | null;
+  milestone_id: string | null;
+  days_overdue: number;
+  created_at: string;
+  updated_at: string;
+  history?: SettlementHistoryItem[];
+  attachments?: SettlementAttachmentItem[];
+  net_position?: SettlementNetPositionData;
+}
+
+export interface SettlementHistoryItem {
+  id: string;
+  invoice_id: string;
+  actor_id: string | null;
+  actor_name: string;
+  action: string;
+  old_status: string | null;
+  new_status: string | null;
+  old_amount_paid: number | null;
+  new_amount_paid: number | null;
+  note: string | null;
+  created_at: string;
+}
+
+export interface SettlementAttachmentItem {
+  id: string;
+  attachment_type: string;
+  filename: string;
+  file_url: string;
+  file_size_bytes: number;
+  notes: string | null;
+  uploaded_at: string;
+}
+
+export interface SettlementNetPositionData {
+  total_dev_owes_usd: number;
+  total_disco_owes_usd: number;
+  net_position_usd: number;
+  has_arrears: boolean;
+  milestone_3_risk: boolean;
+}
+
+export interface SettlementNetPosition {
+  id: string;
+  site_id: string | null;
+  site_name: string;
+  billing_period: string;
+  total_dev_owes_usd: number;
+  total_disco_owes_usd: number;
+  net_position_usd: number;
+  invoices_count: number;
+  paid_count: number;
+  overdue_count: number;
+  disputed_count: number;
+  has_arrears: boolean;
+  arrears_months: number;
+  milestone_3_risk: boolean;
+  computed_at: string | null;
+}
+
+export interface SettlementDashboard {
+  total_invoiced_usd: number;
+  total_paid_usd: number;
+  total_pending_usd: number;
+  total_overdue_usd: number;
+  total_disputed_count: number;
+  total_disputed_usd: number;
+  sites_with_arrears: number;
+  sites_with_m3_risk: number;
+  net_position_usd: number;
+  by_type: {
+    grid_import_usd: number;
+    power_export_usd: number;
+    grid_lease_usd: number;
+    duos_usd: number;
+  };
+  by_disco: Array<{
+    disco_name: string;
+    total_usd: number;
+    overdue_usd: number;
+    disputed_count: number;
+  }>;
+  overdue_invoices: SettlementInvoice[];
+  recent_activity: SettlementHistoryItem[];
 }
 
 // ── Module 12: Performance & M&E ────────────────────────────────────
@@ -527,4 +653,183 @@ export interface ESGReport {
   generated_by: string;
   data_snapshot: Record<string, unknown>;
   status: string;
+}
+
+// ── Ticket Management ──────────────────────────────────────────────────
+
+export interface Ticket {
+  id: string;
+  ticket_ref: string;
+  title: string;
+  description: string;
+  category: string;
+  priority: string;
+  status: string;
+  sla_hours: number;
+  sla_breached: boolean;
+  reporter_id: string | null;
+  reporter_name: string;
+  reporter_org: string;
+  anonymous: boolean;
+  assignee_id: string | null;
+  site_id: string | null;
+  site_name: string;
+  award_id: string | null;
+  milestone_id: string | null;
+  due_date: string | null;
+  resolved_at: string | null;
+  closed_at: string | null;
+  resolution_summary: string | null;
+  escalation_reason: string | null;
+  escalated_to: string | null;
+  parent_ticket_id: string | null;
+  tags: string[];
+  created_at: string;
+  updated_at: string;
+  comments?: TicketCommentItem[];
+  history?: TicketHistoryItem[];
+  attachments?: TicketAttachmentItem[];
+}
+
+export interface TicketCommentItem {
+  id: string;
+  ticket_id: string;
+  author_id: string | null;
+  author_name: string;
+  body: string;
+  is_internal: boolean;
+  attachments: unknown[];
+  created_at: string;
+}
+
+export interface TicketHistoryItem {
+  id: string;
+  ticket_id: string;
+  actor_id: string | null;
+  actor_name: string;
+  action: string;
+  field_changed: string | null;
+  old_value: string | null;
+  new_value: string | null;
+  note: string | null;
+  created_at: string;
+}
+
+export interface TicketAttachmentItem {
+  id: string;
+  filename: string;
+  file_url: string;
+  file_size_bytes: number;
+  mime_type: string;
+  uploaded_at: string;
+}
+
+// ── MEL (Monitoring, Evaluation & Learning) ──────────────────────
+
+export interface MELSubmission {
+  id: string;
+  site_id: string | null;
+  site_name: string;
+  award_id: string | null;
+  reporting_period: string;
+  period_label: string;
+  submission_type: string;
+  status: string;
+  verified_at: string | null;
+  rejection_reason: string | null;
+  hh_connected: number | null;
+  hh_connected_cumulative: number | null;
+  msme_connected: number | null;
+  msme_connected_cumulative: number | null;
+  anchor_connected: number | null;
+  new_connections_this_period: number | null;
+  female_hh_connected: number | null;
+  female_hh_pct: number | null;
+  women_led_msme: number | null;
+  youth_led_msme: number | null;
+  vulnerable_hh: number | null;
+  supply_hours_per_day: number | null;
+  system_availability_pct: number | null;
+  saidi_minutes: number | null;
+  saifi_events: number | null;
+  longest_outage_hours: number | null;
+  grid_supply_hours_per_day: number | null;
+  kwh_generated: number | null;
+  kwh_from_grid: number | null;
+  kwh_sold: number | null;
+  kwh_exported_to_grid: number | null;
+  renewable_energy_fraction: number | null;
+  capacity_utilisation_factor: number | null;
+  diesel_generators_decommissioned: number | null;
+  generator_kva_displaced: number | null;
+  co2_avoided_tco2e: number | null;
+  co2_avoided_cumulative: number | null;
+  fuel_litres_saved: number | null;
+  arpu_usd: number | null;
+  arpu_ngn: number | null;
+  total_revenue_usd: number | null;
+  collection_rate_pct: number | null;
+  direct_jobs_created: number | null;
+  indirect_jobs_created: number | null;
+  women_employed_direct: number | null;
+  msme_revenue_uplift_usd: number | null;
+  pue_anchors_operational: number | null;
+  pue_categories: string[] | null;
+  productive_use_kwh: number | null;
+  key_observation: string | null;
+  learning_tag: string | null;
+  community_feedback: string | null;
+  challenges_faced: string | null;
+  corrective_actions: string | null;
+  data_completeness_pct: number | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string | null;
+}
+
+export interface MELLearningEntry {
+  id: string;
+  site_id: string | null;
+  site_name: string | null;
+  tag: string;
+  title: string;
+  body: string;
+  author_name: string | null;
+  is_portfolio_wide: boolean;
+  is_published: boolean;
+  upvotes: number;
+  reporting_period: string | null;
+  created_at: string;
+}
+
+export interface MELTarget {
+  id: string;
+  indicator_key: string;
+  target_value: number;
+  target_year: number;
+  site_id: string | null;
+  source: string;
+  notes: string | null;
+}
+
+export interface MELDashboard {
+  total_submissions: number;
+  verified_submissions: number;
+  pending_review: number;
+  unique_sites: number;
+  periods_covered: string[];
+  total_hh_connected: number;
+  total_msme_connected: number;
+  total_female_hh: number;
+  avg_supply_hours: number;
+  avg_availability_pct: number;
+  total_kwh_sold: number;
+  total_co2_avoided: number;
+  total_generators_displaced: number;
+  total_direct_jobs: number;
+  total_indirect_jobs: number;
+  avg_collection_rate: number;
+  avg_arpu_usd: number;
+  total_revenue_usd: number;
+  indicators: Record<string, { actual: number; target: number }>;
 }

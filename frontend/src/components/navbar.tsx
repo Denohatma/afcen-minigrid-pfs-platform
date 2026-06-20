@@ -13,7 +13,7 @@ const NAV_ITEMS = [
   { href: "/evaluations", label: "Eval", step: 5 },
   { href: "/agreements", label: "Agreements", step: 6 },
   { href: "/disbursements", label: "Disburse", step: 7 },
-  { href: "/grievances", label: "GRM", step: 8 },
+  { href: "/tickets", label: "Tickets", step: 8 },
   { href: "/settlement-ledger", label: "Settle", step: 9 },
   { href: "/performance", label: "M&E", step: 10 },
 ];
@@ -105,7 +105,7 @@ export function Navbar() {
               Next →
             </button>
           )}
-          {!nextItem && activeStep === 9 && (
+          {!nextItem && activeStep === 10 && (
             <span className="hidden items-center gap-1 rounded bg-primary/15 px-2.5 py-1 text-[11px] font-semibold text-primary lg:flex">
               ✓ Complete
             </span>

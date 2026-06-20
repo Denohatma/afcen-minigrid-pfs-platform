@@ -25,10 +25,21 @@ import type {
   Grievance,
   GrievanceComment,
   SettlementLedgerEntry,
+  SettlementInvoice,
+  SettlementHistoryItem,
+  SettlementNetPosition,
+  SettlementDashboard,
   PerformanceRecord,
   GESIMetric,
   CarbonCredit,
   ESGReport,
+  Ticket,
+  TicketCommentItem,
+  TicketHistoryItem,
+  MELSubmission,
+  MELLearningEntry,
+  MELTarget,
+  MELDashboard,
 } from "./types";
 
 const API_BASE = "/api/proxy";
@@ -313,7 +324,7 @@ export const api = {
     dashboard: () => request<Record<string, unknown>>("/grievances/dashboard"),
   },
 
-  // ── Module 11: Settlement Ledger ────────────────────────────────
+  // ── Module 11: Settlement Ledger (legacy) ───────────────────────
   settlementLedger: {
     list: (params?: Record<string, string>) =>
       request<{ items: SettlementLedgerEntry[] }>(`/settlements-ledger${qs(params)}`),
@@ -331,6 +342,60 @@ export const api = {
     dashboard: () => request<Record<string, unknown>>("/settlements-ledger/dashboard"),
   },
 
+  // ── Settlement Invoices (new) ──────────────────────────────────
+  settlement: {
+    dashboard: () => request<SettlementDashboard>("/settlement/dashboard"),
+    list: (params?: Record<string, string | number>) =>
+      request<{ invoices: SettlementInvoice[]; total: number }>(`/settlement/invoices${qs(params)}`),
+    get: (id: string) => request<SettlementInvoice>(`/settlement/invoices/${id}`),
+    create: (data: Record<string, unknown>) =>
+      request<SettlementInvoice>("/settlement/invoices", { method: "POST", body: JSON.stringify(data) }),
+    update: (id: string, data: Record<string, unknown>) =>
+      request<SettlementInvoice>(`/settlement/invoices/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+    pay: (id: string, data: { amount_paid_usd: number; payment_reference?: string; notes?: string }) =>
+      request<SettlementInvoice>(`/settlement/invoices/${id}/pay`, { method: "POST", body: JSON.stringify(data) }),
+    dispute: (id: string, data: { dispute_reason: string; evidence_notes?: string }) =>
+      request<SettlementInvoice>(`/settlement/invoices/${id}/dispute`, { method: "POST", body: JSON.stringify(data) }),
+    resolveDispute: (id: string, data: { resolution_note: string; agreed_amount_usd?: number; new_status?: string }) =>
+      request<SettlementInvoice>(`/settlement/invoices/${id}/resolve-dispute`, { method: "POST", body: JSON.stringify(data) }),
+    escalate: (id: string, data: { escalation_note: string; escalated_to?: string }) =>
+      request<SettlementInvoice>(`/settlement/invoices/${id}/escalate`, { method: "POST", body: JSON.stringify(data) }),
+    history: (id: string) =>
+      request<{ history: SettlementHistoryItem[] }>(`/settlement/invoices/${id}/history`),
+    netPositions: (params?: Record<string, string>) =>
+      request<{ positions: SettlementNetPosition[] }>(`/settlement/net-positions${qs(params)}`),
+    recompute: () =>
+      request<{ recomputed: number }>("/settlement/net-positions/recompute", { method: "POST" }),
+    export: (params?: Record<string, string>) =>
+      request<{ invoices: SettlementInvoice[]; count: number }>(`/settlement/export${qs(params)}`),
+  },
+
+  // ── Tickets ─────────────────────────────────────────────────────
+  tickets: {
+    list: (params?: Record<string, string>) =>
+      request<{ tickets: Ticket[]; total: number }>(`/tickets${qs(params)}`),
+    get: (id: string) => request<Ticket>(`/tickets/${id}`),
+    create: (data: Partial<Ticket>) =>
+      request<Ticket>("/tickets", { method: "POST", body: JSON.stringify(data) }),
+    update: (id: string, data: Partial<Ticket>) =>
+      request<Ticket>(`/tickets/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    assign: (id: string, data: { assignee_id: string; note?: string }) =>
+      request<Ticket>(`/tickets/${id}/assign`, { method: "PUT", body: JSON.stringify(data) }),
+    escalate: (id: string, data: { escalation_reason: string; escalated_to?: string }) =>
+      request<Ticket>(`/tickets/${id}/escalate`, { method: "PUT", body: JSON.stringify(data) }),
+    resolve: (id: string, data: { resolution_summary: string }) =>
+      request<Ticket>(`/tickets/${id}/resolve`, { method: "PUT", body: JSON.stringify(data) }),
+    close: (id: string, data?: { resolution_summary?: string }) =>
+      request<Ticket>(`/tickets/${id}/close`, { method: "PUT", body: JSON.stringify(data ?? {}) }),
+    addComment: (id: string, data: { body: string; is_internal?: boolean; author_name?: string }) =>
+      request<TicketCommentItem>(`/tickets/${id}/comments`, { method: "POST", body: JSON.stringify(data) }),
+    comments: (id: string) =>
+      request<{ comments: TicketCommentItem[] }>(`/tickets/${id}/comments`),
+    history: (id: string) =>
+      request<{ history: TicketHistoryItem[] }>(`/tickets/${id}/history`),
+    dashboard: () => request<Record<string, unknown>>("/tickets/dashboard"),
+  },
+
   // ── DisCo Boundaries ────────────────────────────────────────────
   discos: {
     boundaries: () =>
@@ -346,7 +411,28 @@ export const api = {
       }),
   },
 
-  // ── Module 12: Performance & M&E ───────────────────────────────
+  // ── MEL (Monitoring, Evaluation & Learning) ────────────────────
+  mel: {
+    dashboard: () => request<MELDashboard>("/mel/dashboard"),
+    submissions: (params?: Record<string, string | number>) =>
+      request<{ submissions: MELSubmission[]; total: number }>(`/mel/submissions${qs(params)}`),
+    getSubmission: (id: string) => request<MELSubmission>(`/mel/submissions/${id}`),
+    createSubmission: (data: Record<string, unknown>) =>
+      request<MELSubmission>("/mel/submissions", { method: "POST", body: JSON.stringify(data) }),
+    verify: (id: string) =>
+      request<MELSubmission>(`/mel/submissions/${id}/verify`, { method: "PUT" }),
+    reject: (id: string, reason: string) =>
+      request<MELSubmission>(`/mel/submissions/${id}/reject?reason=${encodeURIComponent(reason)}`, { method: "PUT" }),
+    learningLog: (params?: Record<string, string>) =>
+      request<{ entries: MELLearningEntry[] }>(`/mel/learning-log${qs(params)}`),
+    createLearning: (data: Record<string, unknown>) =>
+      request<{ id: string; title: string }>("/mel/learning-log", { method: "POST", body: JSON.stringify(data) }),
+    targets: () => request<{ targets: MELTarget[] }>("/mel/targets"),
+    createTarget: (data: Record<string, unknown>) =>
+      request<{ id: string }>("/mel/targets", { method: "POST", body: JSON.stringify(data) }),
+  },
+
+  // ── Module 12: Performance & M&E (legacy) ─────────────────────
   performance: {
     list: (params?: Record<string, string>) =>
       request<{ records: PerformanceRecord[] }>(`/performance${qs(params)}`),

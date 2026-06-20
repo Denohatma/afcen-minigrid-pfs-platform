@@ -517,12 +517,17 @@ class Milestone(Base):
     id = Column(String, primary_key=True, default=new_uuid)
     grant_agreement_id = Column(String, ForeignKey("grant_agreements.id"), nullable=False)
     site_id = Column(String, ForeignKey("site_registry.id"), nullable=True)
+    milestone_number = Column(Integer, default=0)
     milestone_type = Column(String(30), nullable=False)
     title = Column(String(200), nullable=False)
     description = Column(Text, default="")
     tranche_pct = Column(Float, default=0.0)
+    tranche_amount_usd = Column(Float, default=0.0)
     grant_amount_usd = Column(Float, default=0.0)
     evidence = Column(JSON, default=dict)
+    rejection_reason = Column(Text, nullable=True)
+    disbursement_reference = Column(String(200), nullable=True)
+    disbursed_at = Column(DateTime, nullable=True)
     iva_status = Column(String(20), default="not_started")
     nemsa_status = Column(String(20), default="not_applicable")
     rea_approval_status = Column(String(20), default="not_started")
@@ -537,6 +542,8 @@ class Milestone(Base):
     disbursement = relationship("Disbursement", back_populates="milestone", uselist=False)
     gps_photos = relationship("GPSPhoto", back_populates="milestone")
     iva_visits = relationship("IVAVisit", back_populates="milestone")
+    evidence_items = relationship("MilestoneEvidence", backref="milestone", cascade="all, delete-orphan")
+    approval_chain = relationship("DisbursementApproval", backref="milestone", cascade="all, delete-orphan")
 
 
 class Disbursement(Base):
@@ -562,6 +569,99 @@ class Disbursement(Base):
     created_at = Column(DateTime, default=utcnow)
 
     milestone = relationship("Milestone", back_populates="disbursement")
+
+
+# ── Milestone Evidence & Approval Chain ────────────────────────────
+
+class MilestoneEvidence(Base):
+    __tablename__ = "milestone_evidence"
+
+    id = Column(String, primary_key=True, default=new_uuid)
+    milestone_id = Column(String, ForeignKey("milestones.id"), nullable=False)
+    submitted_by = Column(String, nullable=True)
+    evidence_type = Column(String(80), nullable=False)
+    file_url = Column(String(500), default="")
+    file_name = Column(String(300), default="")
+    file_size_bytes = Column(Integer, default=0)
+    gps_lat = Column(Float, nullable=True)
+    gps_lon = Column(Float, nullable=True)
+    gps_captured_at = Column(DateTime, nullable=True)
+    gps_device_id = Column(String(200), default="")
+    metadata_json = Column(JSON, default=dict)
+    status = Column(String(20), default="pending")
+    reviewer_id = Column(String, nullable=True)
+    reviewer_note = Column(Text, nullable=True)
+    submitted_at = Column(DateTime, default=utcnow)
+
+
+class MeterAPIConnection(Base):
+    __tablename__ = "meter_api_connections"
+
+    id = Column(String, primary_key=True, default=new_uuid)
+    site_id = Column(String, ForeignKey("site_registry.id"), nullable=True)
+    grant_agreement_id = Column(String, ForeignKey("grant_agreements.id"), nullable=True)
+    developer_id = Column(String, nullable=True)
+    metering_platform = Column(String(100), nullable=False)
+    api_base_url = Column(String(500), nullable=False)
+    api_key_hash = Column(String(500), default="")
+    auth_method = Column(String(20), default="api_key")
+    connection_status = Column(String(20), default="pending")
+    last_ping_at = Column(DateTime, nullable=True)
+    last_data_pull_at = Column(DateTime, nullable=True)
+    total_active_connections = Column(Integer, default=0)
+    total_kwh_generated = Column(Float, default=0.0)
+    total_kwh_sold = Column(Float, default=0.0)
+    collection_rate_pct = Column(Float, default=0.0)
+    connection_error_message = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+
+
+class MeterReading(Base):
+    __tablename__ = "meter_readings"
+
+    id = Column(String, primary_key=True, default=new_uuid)
+    site_id = Column(String, ForeignKey("site_registry.id"), nullable=True)
+    meter_api_connection_id = Column(String, ForeignKey("meter_api_connections.id"), nullable=True)
+    period_start = Column(DateTime, nullable=False)
+    period_end = Column(DateTime, nullable=False)
+    active_connections = Column(Integer, default=0)
+    kwh_generated = Column(Float, default=0.0)
+    kwh_sold = Column(Float, default=0.0)
+    revenue_usd = Column(Float, default=0.0)
+    collection_rate_pct = Column(Float, default=0.0)
+    capacity_utilisation_pct = Column(Float, default=0.0)
+    supply_hours_per_day = Column(Float, default=0.0)
+    saidi_minutes = Column(Float, default=0.0)
+    saifi_events = Column(Integer, default=0)
+    availability_pct = Column(Float, default=0.0)
+    data_source = Column(String(20), default="api")
+    pulled_at = Column(DateTime, default=utcnow)
+
+
+class DisbursementApproval(Base):
+    __tablename__ = "disbursement_approvals"
+
+    id = Column(String, primary_key=True, default=new_uuid)
+    milestone_id = Column(String, ForeignKey("milestones.id"), nullable=False)
+    step_number = Column(Integer, nullable=False)
+    step_name = Column(String(100), nullable=False)
+    assigned_to = Column(String, nullable=True)
+    action = Column(String(20), nullable=True)
+    action_at = Column(DateTime, nullable=True)
+    note = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=utcnow)
+
+
+class Notification(Base):
+    __tablename__ = "notifications"
+
+    id = Column(String, primary_key=True, default=new_uuid)
+    user_id = Column(String, ForeignKey("users.id"), nullable=True)
+    milestone_id = Column(String, ForeignKey("milestones.id"), nullable=True)
+    message = Column(Text, nullable=False)
+    read = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=utcnow)
 
 
 class GPSPhoto(Base):
@@ -760,3 +860,348 @@ class ESGReport(Base):
     data_snapshot = Column(JSON, default=dict)
     status = Column(String(20), default="draft")
     created_at = Column(DateTime, default=utcnow)
+
+
+# ── Ticket Management ──────────────────────────────────────────────
+
+class Ticket(Base):
+    __tablename__ = "tickets"
+
+    id = Column(String, primary_key=True, default=new_uuid)
+    ticket_ref = Column(String(30), nullable=False, unique=True)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, default="")
+    category = Column(String(30), nullable=False)
+    priority = Column(String(20), nullable=False, default="Medium")
+    status = Column(String(20), nullable=False, default="open")
+    sla_hours = Column(Integer, default=168)
+    sla_breached = Column(Boolean, default=False)
+    reporter_id = Column(String, ForeignKey("users.id"), nullable=True)
+    reporter_name = Column(String(200), default="")
+    reporter_org = Column(String(200), default="")
+    anonymous = Column(Boolean, default=False)
+    assignee_id = Column(String, ForeignKey("users.id"), nullable=True)
+    site_id = Column(String, ForeignKey("site_registry.id"), nullable=True)
+    site_name = Column(String(200), default="")
+    award_id = Column(String, ForeignKey("grant_agreements.id"), nullable=True)
+    milestone_id = Column(String, ForeignKey("milestones.id"), nullable=True)
+    due_date = Column(DateTime, nullable=True)
+    resolved_at = Column(DateTime, nullable=True)
+    closed_at = Column(DateTime, nullable=True)
+    resolution_summary = Column(Text, nullable=True)
+    escalation_reason = Column(Text, nullable=True)
+    escalated_to = Column(String, ForeignKey("users.id"), nullable=True)
+    parent_ticket_id = Column(String, ForeignKey("tickets.id"), nullable=True)
+    tags = Column(JSON, default=list)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+
+    comments = relationship("TicketComment", back_populates="ticket", cascade="all, delete-orphan")
+    history = relationship("TicketHistory", back_populates="ticket", cascade="all, delete-orphan")
+    attachments = relationship("TicketAttachment", back_populates="ticket", cascade="all, delete-orphan")
+
+    __table_args__ = (
+        Index("ix_ticket_status", "status"),
+        Index("ix_ticket_category", "category"),
+        Index("ix_ticket_assignee", "assignee_id"),
+        Index("ix_ticket_priority", "priority"),
+    )
+
+
+class TicketComment(Base):
+    __tablename__ = "ticket_comments"
+
+    id = Column(String, primary_key=True, default=new_uuid)
+    ticket_id = Column(String, ForeignKey("tickets.id", ondelete="CASCADE"), nullable=False)
+    author_id = Column(String, ForeignKey("users.id"), nullable=True)
+    author_name = Column(String(200), default="")
+    body = Column(Text, nullable=False)
+    is_internal = Column(Boolean, default=False)
+    attachments_json = Column(JSON, default=list)
+    created_at = Column(DateTime, default=utcnow)
+
+    ticket = relationship("Ticket", back_populates="comments")
+
+
+class TicketHistory(Base):
+    __tablename__ = "ticket_history"
+
+    id = Column(String, primary_key=True, default=new_uuid)
+    ticket_id = Column(String, ForeignKey("tickets.id", ondelete="CASCADE"), nullable=False)
+    actor_id = Column(String, ForeignKey("users.id"), nullable=True)
+    actor_name = Column(String(200), default="")
+    action = Column(String(50), nullable=False)
+    field_changed = Column(String(50), nullable=True)
+    old_value = Column(Text, nullable=True)
+    new_value = Column(Text, nullable=True)
+    note = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=utcnow)
+
+    ticket = relationship("Ticket", back_populates="history")
+
+
+class TicketAttachment(Base):
+    __tablename__ = "ticket_attachments"
+
+    id = Column(String, primary_key=True, default=new_uuid)
+    ticket_id = Column(String, ForeignKey("tickets.id", ondelete="CASCADE"), nullable=False)
+    comment_id = Column(String, ForeignKey("ticket_comments.id"), nullable=True)
+    uploaded_by = Column(String, ForeignKey("users.id"), nullable=True)
+    filename = Column(String(300), nullable=False)
+    file_url = Column(String(500), nullable=False)
+    file_size_bytes = Column(Integer, default=0)
+    mime_type = Column(String(100), default="")
+    uploaded_at = Column(DateTime, default=utcnow)
+
+    ticket = relationship("Ticket", back_populates="attachments")
+
+
+class TicketSLARule(Base):
+    __tablename__ = "ticket_sla_rules"
+
+    id = Column(String, primary_key=True, default=new_uuid)
+    category = Column(String(30), nullable=True)
+    priority = Column(String(20), nullable=False)
+    sla_hours = Column(Integer, nullable=False)
+    response_hours = Column(Integer, nullable=True)
+    auto_escalate_at_pct = Column(Integer, default=90)
+    escalate_to_role = Column(String(40), nullable=True)
+
+
+# ── Settlement Invoices ───────────────────────────────────────────
+
+class SettlementInvoice(Base):
+    __tablename__ = "settlement_invoices"
+
+    id = Column(String, primary_key=True, default=new_uuid)
+    invoice_ref = Column(String(40), nullable=False, unique=True)
+    site_id = Column(String, ForeignKey("site_registry.id"), nullable=True)
+    site_name = Column(String(200), default="")
+    award_id = Column(String, ForeignKey("grant_agreements.id"), nullable=True)
+    disco_name = Column(String(100), nullable=False)
+    developer_id = Column(String, ForeignKey("users.id"), nullable=True)
+    developer_name = Column(String(200), default="")
+    invoice_type = Column(String(20), nullable=False)
+    direction = Column(String(20), nullable=False)
+    billing_period = Column(String(10), nullable=False)
+    amount_usd = Column(Float, nullable=False, default=0.0)
+    amount_ngn = Column(Float, nullable=True)
+    exchange_rate = Column(Float, nullable=True)
+    kwh_quantity = Column(Float, nullable=True)
+    rate_per_kwh = Column(Float, nullable=True)
+    bulk_meter_reading_start = Column(Float, nullable=True)
+    bulk_meter_reading_end = Column(Float, nullable=True)
+    bulk_meter_id = Column(String(100), nullable=True)
+    status = Column(String(20), nullable=False, default="pending")
+    amount_paid_usd = Column(Float, nullable=True, default=0.0)
+    issued_date = Column(DateTime, nullable=True)
+    due_date = Column(DateTime, nullable=False)
+    paid_date = Column(DateTime, nullable=True)
+    payment_reference = Column(String(200), nullable=True)
+    issuer_role = Column(String(20), nullable=True)
+    notes = Column(Text, nullable=True)
+    dispute_reason = Column(Text, nullable=True)
+    dispute_raised_at = Column(DateTime, nullable=True)
+    dispute_raised_by = Column(String, ForeignKey("users.id"), nullable=True)
+    dispute_resolved_at = Column(DateTime, nullable=True)
+    dispute_resolved_by = Column(String, ForeignKey("users.id"), nullable=True)
+    dispute_resolution_note = Column(Text, nullable=True)
+    escalated_at = Column(DateTime, nullable=True)
+    escalated_by = Column(String, ForeignKey("users.id"), nullable=True)
+    escalated_to = Column(String, ForeignKey("users.id"), nullable=True)
+    escalation_note = Column(Text, nullable=True)
+    linked_ticket_id = Column(String, ForeignKey("tickets.id"), nullable=True)
+    milestone_id = Column(String, ForeignKey("milestones.id"), nullable=True)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+
+    history = relationship("SettlementInvoiceHistory", back_populates="invoice", cascade="all, delete-orphan")
+    attachments = relationship("SettlementInvoiceAttachment", back_populates="invoice", cascade="all, delete-orphan")
+
+    __table_args__ = (
+        Index("ix_si_site", "site_id"),
+        Index("ix_si_award", "award_id"),
+        Index("ix_si_status", "status"),
+        Index("ix_si_type", "invoice_type"),
+        Index("ix_si_developer", "developer_id"),
+        Index("ix_si_due", "due_date"),
+    )
+
+
+class SettlementInvoiceHistory(Base):
+    __tablename__ = "settlement_invoice_history"
+
+    id = Column(String, primary_key=True, default=new_uuid)
+    invoice_id = Column(String, ForeignKey("settlement_invoices.id", ondelete="CASCADE"), nullable=False)
+    actor_id = Column(String, ForeignKey("users.id"), nullable=True)
+    actor_name = Column(String(200), default="")
+    action = Column(String(50), nullable=False)
+    old_status = Column(String(20), nullable=True)
+    new_status = Column(String(20), nullable=True)
+    old_amount_paid = Column(Float, nullable=True)
+    new_amount_paid = Column(Float, nullable=True)
+    note = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=utcnow)
+
+    invoice = relationship("SettlementInvoice", back_populates="history")
+
+
+class SettlementInvoiceAttachment(Base):
+    __tablename__ = "settlement_invoice_attachments"
+
+    id = Column(String, primary_key=True, default=new_uuid)
+    invoice_id = Column(String, ForeignKey("settlement_invoices.id", ondelete="CASCADE"), nullable=False)
+    uploaded_by = Column(String, ForeignKey("users.id"), nullable=True)
+    attachment_type = Column(String(30), nullable=False)
+    filename = Column(String(300), nullable=False)
+    file_url = Column(String(500), nullable=False)
+    file_size_bytes = Column(Integer, default=0)
+    notes = Column(String(500), nullable=True)
+    uploaded_at = Column(DateTime, default=utcnow)
+
+    invoice = relationship("SettlementInvoice", back_populates="attachments")
+
+
+class SettlementNetPosition(Base):
+    __tablename__ = "settlement_net_positions"
+
+    id = Column(String, primary_key=True, default=new_uuid)
+    site_id = Column(String, ForeignKey("site_registry.id"), nullable=False)
+    site_name = Column(String(200), default="")
+    award_id = Column(String, ForeignKey("grant_agreements.id"), nullable=True)
+    billing_period = Column(String(10), nullable=False)
+    total_dev_owes_usd = Column(Float, default=0.0)
+    total_disco_owes_usd = Column(Float, default=0.0)
+    net_position_usd = Column(Float, default=0.0)
+    invoices_count = Column(Integer, default=0)
+    paid_count = Column(Integer, default=0)
+    overdue_count = Column(Integer, default=0)
+    disputed_count = Column(Integer, default=0)
+    has_arrears = Column(Boolean, default=False)
+    arrears_months = Column(Integer, default=0)
+    milestone_3_risk = Column(Boolean, default=False)
+    computed_at = Column(DateTime, default=utcnow)
+
+
+# ── MEL (Monitoring, Evaluation & Learning) ────────────────────────
+
+class MELSubmission(Base):
+    __tablename__ = "mel_submissions"
+
+    id = Column(String, primary_key=True, default=new_uuid)
+    site_id = Column(String, ForeignKey("site_registry.id"), nullable=True)
+    site_name = Column(String(200), default="")
+    award_id = Column(String, ForeignKey("grant_agreements.id"), nullable=True)
+    reporting_period = Column(String(10), nullable=False)
+    period_label = Column(String(20), nullable=False)
+    submitted_by = Column(String, ForeignKey("users.id"), nullable=True)
+    submission_type = Column(String(30), nullable=False)
+    status = Column(String(20), nullable=False, default="submitted")
+    verified_by = Column(String, ForeignKey("users.id"), nullable=True)
+    verified_at = Column(DateTime, nullable=True)
+    rejection_reason = Column(Text, nullable=True)
+
+    hh_connected = Column(Integer, nullable=True)
+    hh_connected_cumulative = Column(Integer, nullable=True)
+    msme_connected = Column(Integer, nullable=True)
+    msme_connected_cumulative = Column(Integer, nullable=True)
+    anchor_connected = Column(Integer, nullable=True)
+    new_connections_this_period = Column(Integer, nullable=True)
+
+    female_hh_connected = Column(Integer, nullable=True)
+    female_hh_pct = Column(Float, nullable=True)
+    women_led_msme = Column(Integer, nullable=True)
+    youth_led_msme = Column(Integer, nullable=True)
+    vulnerable_hh = Column(Integer, nullable=True)
+
+    supply_hours_per_day = Column(Float, nullable=True)
+    system_availability_pct = Column(Float, nullable=True)
+    saidi_minutes = Column(Float, nullable=True)
+    saifi_events = Column(Integer, nullable=True)
+    longest_outage_hours = Column(Float, nullable=True)
+    grid_supply_hours_per_day = Column(Float, nullable=True)
+
+    kwh_generated = Column(Float, nullable=True)
+    kwh_from_grid = Column(Float, nullable=True)
+    kwh_sold = Column(Float, nullable=True)
+    kwh_exported_to_grid = Column(Float, nullable=True)
+    renewable_energy_fraction = Column(Float, nullable=True)
+    capacity_utilisation_factor = Column(Float, nullable=True)
+    diesel_generators_decommissioned = Column(Integer, nullable=True)
+    generator_kva_displaced = Column(Float, nullable=True)
+    co2_avoided_tco2e = Column(Float, nullable=True)
+    co2_avoided_cumulative = Column(Float, nullable=True)
+    fuel_litres_saved = Column(Float, nullable=True)
+
+    arpu_usd = Column(Float, nullable=True)
+    arpu_ngn = Column(Float, nullable=True)
+    total_revenue_usd = Column(Float, nullable=True)
+    collection_rate_pct = Column(Float, nullable=True)
+    direct_jobs_created = Column(Integer, nullable=True)
+    indirect_jobs_created = Column(Integer, nullable=True)
+    women_employed_direct = Column(Integer, nullable=True)
+    msme_revenue_uplift_usd = Column(Float, nullable=True)
+
+    pue_anchors_operational = Column(Integer, nullable=True)
+    pue_categories = Column(JSON, nullable=True)
+    productive_use_kwh = Column(Float, nullable=True)
+
+    key_observation = Column(Text, nullable=True)
+    learning_tag = Column(String(30), nullable=True)
+    community_feedback = Column(Text, nullable=True)
+    challenges_faced = Column(Text, nullable=True)
+    corrective_actions = Column(Text, nullable=True)
+
+    data_completeness_pct = Column(Float, nullable=True)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+
+    __table_args__ = (
+        Index("ix_mel_site_period", "site_id", "reporting_period"),
+        Index("ix_mel_status", "status"),
+        Index("ix_mel_type", "submission_type"),
+    )
+
+
+class MELLearningLog(Base):
+    __tablename__ = "mel_learning_log"
+
+    id = Column(String, primary_key=True, default=new_uuid)
+    site_id = Column(String, ForeignKey("site_registry.id"), nullable=True)
+    award_id = Column(String, ForeignKey("grant_agreements.id"), nullable=True)
+    reporting_period = Column(String(10), nullable=True)
+    author_id = Column(String, ForeignKey("users.id"), nullable=True)
+    author_name = Column(String(200), default="")
+    tag = Column(String(30), nullable=False)
+    title = Column(String(300), nullable=False)
+    body = Column(Text, nullable=False)
+    site_name = Column(String(200), default="")
+    is_portfolio_wide = Column(Boolean, default=False)
+    is_published = Column(Boolean, default=False)
+    upvotes = Column(Integer, default=0)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+
+    __table_args__ = (
+        Index("ix_mel_learn_tag", "tag"),
+        Index("ix_mel_learn_site", "site_id"),
+    )
+
+
+class MELTarget(Base):
+    __tablename__ = "mel_targets"
+
+    id = Column(String, primary_key=True, default=new_uuid)
+    indicator_key = Column(String(60), nullable=False)
+    target_value = Column(Float, nullable=False)
+    target_year = Column(Integer, nullable=False)
+    site_id = Column(String, ForeignKey("site_registry.id"), nullable=True)
+    award_id = Column(String, ForeignKey("grant_agreements.id"), nullable=True)
+    source = Column(String(30), nullable=False)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=utcnow)
+
+    __table_args__ = (
+        Index("ix_mel_targets_indicator", "indicator_key"),
+    )
