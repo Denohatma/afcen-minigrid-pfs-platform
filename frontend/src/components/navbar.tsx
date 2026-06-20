@@ -36,9 +36,9 @@ export function Navbar() {
       <div className="mx-auto flex h-10 max-w-[1400px] items-center gap-3 px-3">
         {/* Logos + branding */}
         <Link href="/" className="flex shrink-0 items-center gap-1.5">
-          <span className="text-base leading-none">🇳🇬</span>
-          <Image src="/rea-logo.svg" alt="REA" width={48} height={24} className="h-5 w-auto" />
-          <Image src="/wb-logo.svg" alt="World Bank" width={60} height={24} className="h-5 w-auto" />
+          <Image src="/nigeria-flag.svg" alt="Nigeria" width={28} height={20} className="h-5 w-auto" />
+          <Image src="/rea-logo.jpeg" alt="REA" width={48} height={24} className="h-5 w-auto" />
+          <Image src="/wb-logo.jpg" alt="World Bank" width={60} height={24} className="h-5 w-auto" />
           <span className="ml-1 font-heading text-[11px] font-bold tracking-tight text-foreground">
             DARES IMG
           </span>

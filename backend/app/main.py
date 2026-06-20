@@ -23,6 +23,7 @@ from app.api.routes import (
     grievances,
     settlement_ledger,
     performance,
+    alfred,
 )
 
 logging.basicConfig(
@@ -67,6 +68,7 @@ app.include_router(disbursements.router, prefix="/api/v1", tags=["disbursements"
 app.include_router(grievances.router, prefix="/api/v1", tags=["grievances"])
 app.include_router(settlement_ledger.router, prefix="/api/v1", tags=["settlement-ledger"])
 app.include_router(performance.router, prefix="/api/v1", tags=["performance"])
+app.include_router(alfred.router, prefix="/api/v1", tags=["alfred"])
 
 
 @app.get("/health")

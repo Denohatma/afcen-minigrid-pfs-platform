@@ -4,11 +4,10 @@ import { useEffect, useRef, useCallback } from "react";
 import L from "leaflet";
 import {
   DISCO_COLORS,
-  DISCO_FILL,
   DISCO_CENTERS,
-  DISCO_CONCESSIONS,
   TRANSMISSION_LINES,
 } from "@/lib/nigeria-geo";
+import { api } from "@/lib/api";
 
 interface Settlement {
   rank: number;
@@ -67,40 +66,45 @@ export function SettlementMap({
       .attribution({ position: "bottomleft", prefix: false })
       .addTo(map);
 
-    Object.entries(DISCO_CONCESSIONS).forEach(([disco, coords]) => {
-      const color = DISCO_COLORS[disco] || "#666";
-      const fill = DISCO_FILL[disco] || "rgba(0,0,0,0.05)";
-      L.polygon(coords as L.LatLngExpression[], {
-        color,
-        weight: 2,
-        dashArray: "8,4",
-        fillColor: fill,
-        fillOpacity: 1,
-        opacity: 0.7,
+    api.discos.boundaries().then((geojson) => {
+      if (!geojson?.features?.length || !mapRef.current) return;
+      L.geoJSON(geojson as GeoJSON.FeatureCollection, {
+        style: (feature) => {
+          const disco = feature?.properties?.disco_name || "";
+          const color = DISCO_COLORS[disco] || feature?.properties?.color || "#666";
+          return {
+            color,
+            weight: 2,
+            dashArray: "8,4",
+            fillColor: color,
+            fillOpacity: 0.08,
+            opacity: 0.7,
+          };
+        },
       }).addTo(map);
+    }).catch(() => {});
 
-      const center = DISCO_CENTERS[disco];
-      if (center) {
-        L.marker(center as L.LatLngExpression, {
-          icon: L.divIcon({
-            className: "disco-label",
-            html: `<span style="
-              background:${color};
-              color:#fff;
-              padding:2px 8px;
-              border-radius:4px;
-              font-size:11px;
-              font-weight:600;
-              font-family:Inter,system-ui,sans-serif;
-              white-space:nowrap;
-              box-shadow:0 1px 3px rgba(0,0,0,0.2);
-            ">${disco}</span>`,
-            iconSize: [60, 20],
-            iconAnchor: [30, 10],
-          }),
-          interactive: false,
-        }).addTo(map);
-      }
+    Object.entries(DISCO_CENTERS).forEach(([disco, center]) => {
+      const color = DISCO_COLORS[disco] || "#666";
+      L.marker(center as L.LatLngExpression, {
+        icon: L.divIcon({
+          className: "disco-label",
+          html: `<span style="
+            background:${color};
+            color:#fff;
+            padding:2px 8px;
+            border-radius:4px;
+            font-size:11px;
+            font-weight:600;
+            font-family:IBM Plex Sans,system-ui,sans-serif;
+            white-space:nowrap;
+            box-shadow:0 1px 3px rgba(0,0,0,0.2);
+          ">${disco}</span>`,
+          iconSize: [60, 20],
+          iconAnchor: [30, 10],
+        }),
+        interactive: false,
+      }).addTo(map);
     });
 
     TRANSMISSION_LINES.forEach((line) => {

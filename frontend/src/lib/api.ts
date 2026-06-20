@@ -327,6 +327,21 @@ export const api = {
     dashboard: () => request<Record<string, unknown>>("/settlements-ledger/dashboard"),
   },
 
+  // ── DisCo Boundaries ────────────────────────────────────────────
+  discos: {
+    boundaries: () =>
+      request<{ type: string; features: Array<{ type: string; properties: { disco_name: string; color: string; states_covered: string[] }; geometry: unknown }> }>("/discos/boundaries"),
+  },
+
+  // ── Alfred Chatbot ──────────────────────────────────────────────
+  alfred: {
+    chat: (message: string) =>
+      request<{ reply: string; source: string }>("/alfred/chat", {
+        method: "POST",
+        body: JSON.stringify({ message }),
+      }),
+  },
+
   // ── Module 12: Performance & M&E ───────────────────────────────
   performance: {
     list: (params?: Record<string, string>) =>

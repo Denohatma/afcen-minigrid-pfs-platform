@@ -6,39 +6,10 @@ export const DISCO_COLORS: Record<string, string> = {
   IE: "#E65100",
 };
 
-export const DISCO_FILL: Record<string, string> = {
-  AEDC: "rgba(21,101,192,0.08)",
-  KEDCO: "rgba(123,31,162,0.08)",
-  IE: "rgba(230,81,0,0.08)",
-};
-
 export const DISCO_CENTERS: Record<string, LatLngExpression> = {
-  AEDC: [9.06, 7.49],
-  KEDCO: [11.5, 8.5],
-  IE: [6.5, 3.4],
-};
-
-export const DISCO_CONCESSIONS: Record<string, LatLngExpression[]> = {
-  AEDC: [
-    [11.5, 3.4],
-    [11.5, 9.7],
-    [9.0, 9.7],
-    [6.3, 9.7],
-    [6.3, 5.8],
-    [7.5, 3.4],
-  ],
-  KEDCO: [
-    [13.5, 6.7],
-    [13.5, 10.8],
-    [10.4, 10.8],
-    [10.4, 6.7],
-  ],
-  IE: [
-    [6.8, 2.6],
-    [6.8, 4.5],
-    [6.3, 4.5],
-    [6.3, 2.6],
-  ],
+  AEDC: [9.12, 6.43],
+  KEDCO: [12.14, 8.57],
+  IE: [6.59, 3.43],
 };
 
 export const TRANSMISSION_LINES: {

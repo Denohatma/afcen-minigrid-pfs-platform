@@ -29,6 +29,18 @@ const SettlementMap = dynamic(
   }
 );
 
+const AlfredChat = dynamic(
+  () => import("@/components/alfred-chat").then((m) => m.AlfredChat),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
+        Loading Alfred...
+      </div>
+    ),
+  }
+);
+
 const DISCO_OPTIONS = [
   { value: "", label: "All" },
   { value: "AEDC", label: "AEDC" },
@@ -196,13 +208,16 @@ export default function SitesPage() {
               </button>
             )}
           </div>
-          <div className="h-[480px]">
+          <div className="h-[380px]">
             <SettlementMap
               settlements={settlements}
               selectedRanks={selectedRanks}
               onToggleSelect={toggleSelect}
               activeDisco={disco}
             />
+          </div>
+          <div className="h-[230px] border-t border-border">
+            <AlfredChat />
           </div>
         </div>
 

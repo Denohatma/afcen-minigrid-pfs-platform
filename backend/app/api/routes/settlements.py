@@ -85,6 +85,26 @@ async def settlement_stats():
     }
 
 
+@router.get("/discos/boundaries")
+async def disco_boundaries():
+    """Return accurate DisCo concession boundary GeoJSON from official shapefiles."""
+    import json as _json
+    from pathlib import Path
+    from fastapi.responses import JSONResponse
+
+    geo_path = Path("/app/src/data/disco_boundaries.geojson")
+    if not geo_path.exists():
+        geo_path = Path(__file__).resolve().parent.parent.parent.parent.parent / "src" / "data" / "disco_boundaries.geojson"
+
+    if not geo_path.exists():
+        return {"type": "FeatureCollection", "features": [], "note": "No boundary data available"}
+
+    with open(geo_path) as f:
+        data = _json.load(f)
+
+    return JSONResponse(content=data, headers={"Cache-Control": "public, max-age=86400"})
+
+
 @router.get("/mv-lines/{disco}")
 async def get_mv_lines(disco: str):
     """Return MV line GeoJSON for a DisCo (currently KEDCO only)."""
