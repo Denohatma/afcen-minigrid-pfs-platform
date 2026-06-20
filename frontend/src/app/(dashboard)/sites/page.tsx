@@ -1,8 +1,8 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useCallback, useMemo } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { api } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
@@ -66,6 +66,8 @@ function fmt(n: number) {
 }
 
 export default function SitesPage() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const [disco, setDisco] = useState("");
   const [mgType, setMgType] = useState("");
   const [search, setSearch] = useState("");
@@ -73,7 +75,9 @@ export default function SitesPage() {
   const [maxGridDist, setMaxGridDist] = useState("");
   const [page, setPage] = useState(0);
   const [selectedRanks, setSelectedRanks] = useState<Set<number>>(new Set());
-  const [discoRequest, setDiscoRequest] = useState<string | null>(null);
+  const [lotName, setLotName] = useState("");
+  const [showLotForm, setShowLotForm] = useState(false);
+  const [creating, setCreating] = useState(false);
   const ps = 50;
 
   const params: Record<string, string | number> = { limit: ps, offset: page * ps };
@@ -120,13 +124,39 @@ export default function SitesPage() {
 
   const sel = useMemo(() => {
     const s = settlements.filter((s) => selectedRanks.has(s.rank));
+    const discos = new Set(s.map((x) => x.disco));
+    const states = new Set(s.map((x) => x.state));
     return {
       n: selectedRanks.size,
       conn: s.reduce((a, x) => a + x.connections, 0),
       demand: Math.round(s.reduce((a, x) => a + x.demand_kwh, 0)),
       pop: s.reduce((a, x) => a + x.population, 0),
+      disco: discos.size === 1 ? [...discos][0] : "",
+      state: states.size === 1 ? [...states][0] : "",
+      discoCount: discos.size,
     };
   }, [settlements, selectedRanks]);
+
+  const handleCreateLot = async () => {
+    if (!lotName.trim() || !sel.disco) return;
+    setCreating(true);
+    try {
+      const lot = await api.lots.create({
+        lot_name: lotName.trim(),
+        disco: sel.disco,
+        state: sel.state,
+      });
+      await queryClient.invalidateQueries({ queryKey: ["lots"] });
+      setSelectedRanks(new Set());
+      setShowLotForm(false);
+      setLotName("");
+      router.push("/disco-readiness");
+    } catch (e) {
+      alert("Failed to create lot. Please try again.");
+    } finally {
+      setCreating(false);
+    }
+  };
 
   return (
     <div className="text-[13px]">
@@ -142,7 +172,7 @@ export default function SitesPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {selectedRanks.size > 0 && (
+          {selectedRanks.size > 0 && !showLotForm && (
             <>
               <span className="text-[11px] text-muted-foreground">
                 {fmt(sel.pop)} pop &middot; {fmt(sel.conn)} conn &middot; {fmt(sel.demand)} kWh/d
@@ -150,12 +180,44 @@ export default function SitesPage() {
               <Button size="sm" variant="outline" className="h-6 px-2 text-[11px]" onClick={() => setSelectedRanks(new Set())}>
                 Clear
               </Button>
-              <Link href="/lots">
-                <Button size="sm" className="h-6 px-2 text-[11px]">Create Lot →</Button>
-              </Link>
+              {sel.discoCount > 1 ? (
+                <span className="text-[11px] text-amber-700">Select sites from one DisCo only</span>
+              ) : (
+                <Button size="sm" className="h-6 px-2 text-[11px]" onClick={() => { setShowLotForm(true); setLotName(`${sel.disco} Lot — ${sel.n} sites`); }}>
+                  Create Lot →
+                </Button>
+              )}
             </>
           )}
+          {showLotForm && (
+            <div className="flex items-center gap-1.5">
+              <Input
+                value={lotName}
+                onChange={(e) => setLotName(e.target.value)}
+                placeholder="Lot name..."
+                className="h-6 w-48 text-[11px] px-1.5"
+                onKeyDown={(e) => e.key === "Enter" && handleCreateLot()}
+              />
+              <span className="text-[10px] text-muted-foreground">{sel.disco} &middot; {sel.n} sites</span>
+              <Button size="sm" className="h-6 px-2 text-[11px]" onClick={handleCreateLot} disabled={creating || !lotName.trim()}>
+                {creating ? "Creating..." : "Submit to DisCo →"}
+              </Button>
+              <button className="text-[10px] text-muted-foreground underline" onClick={() => setShowLotForm(false)}>cancel</button>
+            </div>
+          )}
         </div>
+      </div>
+
+      {/* Flow indicator */}
+      <div className="mt-1.5 flex items-center gap-1.5 text-[10px] text-muted-foreground">
+        <span className="rounded bg-primary/10 px-1.5 py-0.5 font-semibold text-primary">Step 1</span>
+        <span>Select sites &amp; create lot</span>
+        <span className="text-border">→</span>
+        <span className="rounded bg-muted px-1.5 py-0.5">Step 2</span>
+        <span>DisCo approves interconnection</span>
+        <span className="text-border">→</span>
+        <span className="rounded bg-muted px-1.5 py-0.5">Step 3</span>
+        <span>Package for tender</span>
       </div>
 
       {/* Scoring + stats strip */}
@@ -193,20 +255,11 @@ export default function SitesPage() {
         <div className="rounded border border-border bg-white">
           <div className="flex items-center justify-between border-b border-border px-2 py-1">
             <span className="text-[11px] font-semibold">DisCo Concession Map</span>
-            {discoRequest ? (
-              <span className="flex items-center gap-1">
-                <Badge className="bg-green-100 text-green-800 text-[10px] py-0">Sent to {discoRequest}</Badge>
-                <button className="text-[10px] text-muted-foreground underline" onClick={() => setDiscoRequest(null)}>reset</button>
-              </span>
-            ) : (
-              <button
-                className={`text-[10px] ${selectedRanks.size > 0 ? "text-primary font-semibold" : "text-muted-foreground"}`}
-                disabled={selectedRanks.size === 0}
-                onClick={() => setDiscoRequest(disco || settlements.find((s) => selectedRanks.has(s.rank))?.disco || "DisCo")}
-              >
-                {selectedRanks.size > 0 ? `Request ${disco || "DisCo"} Approval →` : "Select sites to request DisCo data"}
-              </button>
-            )}
+            <span className="text-[10px] text-muted-foreground">
+              {selectedRanks.size > 0
+                ? `${selectedRanks.size} sites selected for lot`
+                : "Select sites from the table to create a lot"}
+            </span>
           </div>
           <div className="h-[380px]">
             <SettlementMap

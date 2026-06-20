@@ -1,14 +1,9 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { api } from "@/lib/api";
-import { DiscoReadiness } from "@/lib/types";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -17,515 +12,180 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const STATUS_OPTIONS = [
-  { value: "", label: "All Statuses" },
-  { value: "not_started", label: "Not Started" },
-  { value: "in_progress", label: "In Progress" },
-  { value: "verified", label: "Verified" },
-  { value: "flagged", label: "Flagged" },
-];
-
-const STATUS_COLORS: Record<string, string> = {
-  not_started: "bg-gray-100 text-gray-700",
-  in_progress: "bg-amber-100 text-amber-800",
-  verified: "bg-green-100 text-green-800",
-  flagged: "bg-red-100 text-red-800",
-};
-
-const REQUEST_STATUS_COLORS: Record<string, string> = {
-  pending: "bg-amber-100 text-amber-800",
-  approved: "bg-green-100 text-green-800",
-  rejected: "bg-red-100 text-red-800",
-  data_shared: "bg-blue-100 text-blue-800",
-};
-
-function statusLabel(status: string) {
-  return status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+function fmt(n: number) {
+  return new Intl.NumberFormat("en-US").format(n);
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+function formatLabel(s: string) {
+  return s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 export default function DiscoReadinessPage() {
-  const [statusFilter, setStatusFilter] = useState("");
-  const [page, setPage] = useState(0);
-  const pageSize = 50;
+  const queryClient = useQueryClient();
 
-  const params: Record<string, string> = {
-    limit: String(pageSize),
-    offset: String(page * pageSize),
-  };
-  if (statusFilter) params.overall_status = statusFilter;
-
-  const { data, isLoading } = useQuery({
-    queryKey: ["disco-readiness", statusFilter, page],
-    queryFn: () => api.discoReadiness.list(params),
-  });
-
-  const { data: dashboard } = useQuery({
-    queryKey: ["disco-readiness-dashboard"],
-    queryFn: () => api.discoReadiness.dashboard(),
-  });
-
-  const { data: lotsData } = useQuery({
+  const { data: lotsData, isLoading } = useQuery({
     queryKey: ["lots"],
     queryFn: () => api.lots.list({}),
   });
 
-  const items: DiscoReadiness[] = data?.items ?? [];
-  const total = data?.total ?? 0;
-  const totalPages = Math.ceil(total / pageSize);
   const lots: Array<Record<string, any>> = ((lotsData as any)?.lots ?? []) as any;
 
-  const stats = dashboard as Record<string, any> | undefined;
+  const pendingLots = lots.filter((l) => !l.approval_to_tender);
+  const approvedLots = lots.filter((l) => l.approval_to_tender);
 
-  const resetFilters = () => {
-    setStatusFilter("");
-    setPage(0);
-  };
+  const approveMutation = useMutation({
+    mutationFn: (lotId: string) => api.lots.approve(lotId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lots"] });
+    },
+  });
 
   return (
-    <div>
+    <div className="text-[13px]">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading text-2xl font-bold">
-            DisCo Readiness & Data Sharing
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Track distribution company readiness milestones, data requests, and lot approvals
+          <h1 className="font-heading text-base font-bold">DisCo Interconnection Approval</h1>
+          <p className="text-[11px] text-muted-foreground">
+            {lots.length} lots &middot; {pendingLots.length} pending approval &middot; {approvedLots.length} approved for tender
           </p>
         </div>
       </div>
 
-      {/* Dashboard Stats Cards */}
-      {stats && (
-        <div className="mt-4 grid gap-4 md:grid-cols-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground">
-                Total Records
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">{stats.total ?? 0}</p>
-            </CardContent>
-          </Card>
-          <Card
-            className={`cursor-pointer transition-all ${
-              statusFilter === "verified"
-                ? "ring-2 ring-primary border-primary"
-                : "hover:border-primary/40"
-            }`}
-            onClick={() => {
-              setStatusFilter(statusFilter === "verified" ? "" : "verified");
-              setPage(0);
-            }}
-          >
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground">
-                Verified
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold text-green-700">
-                {stats.verified ?? 0}
-              </p>
-            </CardContent>
-          </Card>
-          <Card
-            className={`cursor-pointer transition-all ${
-              statusFilter === "in_progress"
-                ? "ring-2 ring-primary border-primary"
-                : "hover:border-primary/40"
-            }`}
-            onClick={() => {
-              setStatusFilter(
-                statusFilter === "in_progress" ? "" : "in_progress"
-              );
-              setPage(0);
-            }}
-          >
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground">
-                In Progress
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold text-amber-700">
-                {stats.in_progress ?? 0}
-              </p>
-            </CardContent>
-          </Card>
-          <Card
-            className={`cursor-pointer transition-all ${
-              statusFilter === "flagged"
-                ? "ring-2 ring-primary border-primary"
-                : "hover:border-primary/40"
-            }`}
-            onClick={() => {
-              setStatusFilter(statusFilter === "flagged" ? "" : "flagged");
-              setPage(0);
-            }}
-          >
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground">
-                Flagged
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold text-red-700">
-                {stats.flagged ?? 0}
-              </p>
-            </CardContent>
-          </Card>
+      {/* Flow indicator */}
+      <div className="mt-1.5 flex items-center gap-1.5 text-[10px] text-muted-foreground">
+        <span className="rounded bg-muted px-1.5 py-0.5">Step 1</span>
+        <span>Sites selected</span>
+        <span className="text-border">→</span>
+        <span className="rounded bg-primary/10 px-1.5 py-0.5 font-semibold text-primary">Step 2</span>
+        <span>DisCo approves interconnection</span>
+        <span className="text-border">→</span>
+        <span className="rounded bg-muted px-1.5 py-0.5">Step 3</span>
+        <span>Package for tender</span>
+      </div>
+
+      {/* Pending Approval */}
+      <div className="mt-3 rounded border border-border bg-white">
+        <div className="flex items-center justify-between border-b border-border px-3 py-1.5">
+          <span className="text-[11px] font-semibold">Pending DisCo Approval ({pendingLots.length})</span>
+          <span className="text-[10px] text-muted-foreground">DisCo must approve sites for grid interconnection before tender</span>
         </div>
-      )}
-
-      <Tabs defaultValue="lots" className="mt-6">
-        <TabsList>
-          <TabsTrigger value="lots">
-            Lots & Data Requests ({lots.length})
-          </TabsTrigger>
-          <TabsTrigger value="readiness">
-            Readiness Tracker ({total})
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Lots & Data Request Status Tab */}
-        <TabsContent value="lots" className="mt-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm">
-                Lot Data Request & DisCo Response Status
-              </CardTitle>
-              <p className="text-xs text-muted-foreground">
-                Track which lots have been sent to DisCos for approval and data sharing with bidders
-              </p>
-            </CardHeader>
-            <CardContent className="p-0">
-              {lots.length === 0 ? (
-                <div className="p-8 text-center text-sm text-muted-foreground">
-                  No lots created yet. Go to{" "}
-                  <Link href="/sites" className="text-primary underline">
-                    Sites
-                  </Link>{" "}
-                  to select settlements and create a lot.
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Lot Name</TableHead>
-                      <TableHead>DisCo</TableHead>
-                      <TableHead className="text-center">Sites</TableHead>
-                      <TableHead className="text-center">Connections</TableHead>
-                      <TableHead>Data Request</TableHead>
-                      <TableHead>DisCo Response</TableHead>
-                      <TableHead>Tender Status</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {lots.map((lot) => {
-                      const isApproved = lot.approved;
-                      const tenderStatus = lot.tender_status || "none";
-                      const dataRequestSent = isApproved || tenderStatus !== "none";
-                      const dataRequestStatus = dataRequestSent
-                        ? isApproved
-                          ? "approved"
-                          : "pending"
-                        : "not_sent";
-                      const discoResponse = isApproved
-                        ? tenderStatus === "issued"
-                          ? "data_shared"
-                          : "approved"
-                        : dataRequestSent
-                          ? "pending"
-                          : "not_sent";
-
-                      return (
-                        <TableRow key={lot.id}>
-                          <TableCell>
-                            <Link
-                              href={`/lots/${lot.id}`}
-                              className="font-medium text-primary hover:underline"
-                            >
-                              {lot.name}
-                            </Link>
-                            {lot.disco_name && (
-                              <div className="text-xs text-muted-foreground">
-                                {lot.disco_name}
-                              </div>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className="text-xs">
-                              {lot.disco || "—"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-center font-mono text-sm">
-                            {lot.sites_count ?? lot.sites?.length ?? 0}
-                          </TableCell>
-                          <TableCell className="text-center font-mono text-sm">
-                            {(lot.total_connections ?? 0).toLocaleString()}
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              className={`text-xs ${
-                                dataRequestStatus === "approved"
-                                  ? "bg-green-100 text-green-800"
-                                  : dataRequestStatus === "pending"
-                                    ? "bg-amber-100 text-amber-800"
-                                    : "bg-gray-100 text-gray-700"
-                              }`}
-                            >
-                              {dataRequestStatus === "not_sent"
-                                ? "Not Sent"
-                                : statusLabel(dataRequestStatus)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              className={`text-xs ${
-                                REQUEST_STATUS_COLORS[discoResponse] ??
-                                "bg-gray-100 text-gray-700"
-                              }`}
-                            >
-                              {discoResponse === "not_sent"
-                                ? "Awaiting Request"
-                                : discoResponse === "data_shared"
-                                  ? "Data Shared"
-                                  : statusLabel(discoResponse)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              className={`text-xs ${
-                                tenderStatus === "issued"
-                                  ? "bg-green-100 text-green-800"
-                                  : tenderStatus === "draft"
-                                    ? "bg-blue-100 text-blue-800"
-                                    : "bg-gray-100 text-gray-700"
-                              }`}
-                            >
-                              {tenderStatus === "none"
-                                ? "No Tender"
-                                : statusLabel(tenderStatus)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Link href={`/lots/${lot.id}`}>
-                              <Button variant="outline" size="sm" className="h-7 text-xs">
-                                View
-                              </Button>
-                            </Link>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Readiness Tracker Tab */}
-        <TabsContent value="readiness" className="mt-4">
-          {/* Filters */}
-          <Card className="mb-4">
-            <CardContent className="pt-4">
-              <div className="grid gap-3 md:grid-cols-3">
-                <div>
-                  <Label className="text-xs">Overall Status</Label>
-                  <select
-                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
-                    value={statusFilter}
-                    onChange={(e) => {
-                      setStatusFilter(e.target.value);
-                      setPage(0);
-                    }}
-                  >
-                    {STATUS_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>
-                        {o.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex items-end">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-9 px-3 text-xs"
-                    onClick={resetFilters}
-                  >
-                    Reset
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Table */}
-          <Card>
-            <CardContent className="p-0">
-              {isLoading ? (
-                <div className="p-8 text-center text-muted-foreground">
-                  Loading disco readiness records...
-                </div>
-              ) : items.length === 0 ? (
-                <div className="p-8 text-center text-muted-foreground">
-                  No records match your filters.{" "}
-                  <button
-                    className="text-primary underline"
-                    onClick={resetFilters}
-                  >
-                    Reset filters
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Site ID</TableHead>
-                        <TableHead>Feeder Data</TableHead>
-                        <TableHead>POI</TableHead>
-                        <TableHead>Bulk Meter</TableHead>
-                        <TableHead>Customer Data</TableHead>
-                        <TableHead>Settlement Terms</TableHead>
-                        <TableHead>Tripartite</TableHead>
-                        <TableHead>Overall Status</TableHead>
-                        <TableHead>Last Updated</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {items.map((r) => (
-                        <TableRow key={r.id}>
-                          <TableCell className="font-mono text-sm font-medium">
-                            {r.site_id}
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              className={`text-xs ${
-                                STATUS_COLORS[r.feeder_data_status] ??
-                                "bg-gray-100 text-gray-700"
-                              }`}
-                            >
-                              {statusLabel(r.feeder_data_status)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              className={`text-xs ${
-                                STATUS_COLORS[r.poi_status] ??
-                                "bg-gray-100 text-gray-700"
-                              }`}
-                            >
-                              {statusLabel(r.poi_status)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              className={`text-xs ${
-                                STATUS_COLORS[r.bulk_meter_status] ??
-                                "bg-gray-100 text-gray-700"
-                              }`}
-                            >
-                              {statusLabel(r.bulk_meter_status)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              className={`text-xs ${
-                                STATUS_COLORS[r.customer_data_status] ??
-                                "bg-gray-100 text-gray-700"
-                              }`}
-                            >
-                              {statusLabel(r.customer_data_status)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              className={`text-xs ${
-                                STATUS_COLORS[r.settlement_terms_status] ??
-                                "bg-gray-100 text-gray-700"
-                              }`}
-                            >
-                              {statusLabel(r.settlement_terms_status)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              className={`text-xs ${
-                                STATUS_COLORS[r.tripartite_status] ??
-                                "bg-gray-100 text-gray-700"
-                              }`}
-                            >
-                              {statusLabel(r.tripartite_status)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              className={`text-xs ${
-                                STATUS_COLORS[r.overall_status] ??
-                                "bg-gray-100 text-gray-700"
-                              }`}
-                            >
-                              {statusLabel(r.overall_status)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {formatDate(r.updated_at)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-
-                  {/* Pagination */}
-                  <div className="flex items-center justify-between border-t px-4 py-3">
-                    <p className="text-sm text-muted-foreground">
-                      Showing {page * pageSize + 1}–
-                      {Math.min((page + 1) * pageSize, total)} of {total}{" "}
-                      records
-                    </p>
-                    <div className="flex gap-2">
+        {isLoading ? (
+          <div className="p-4 text-center text-xs text-muted-foreground">Loading...</div>
+        ) : pendingLots.length === 0 ? (
+          <div className="p-6 text-center text-xs text-muted-foreground">
+            No lots pending approval. <Link href="/sites" className="text-primary underline">Select sites</Link> to create a lot.
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow className="text-[11px]">
+                <TableHead className="py-1.5">Lot Name</TableHead>
+                <TableHead className="py-1.5">DisCo</TableHead>
+                <TableHead className="py-1.5 text-right">Sites</TableHead>
+                <TableHead className="py-1.5 text-right">Connections (Est.)</TableHead>
+                <TableHead className="py-1.5">Status</TableHead>
+                <TableHead className="py-1.5">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {pendingLots.map((lot) => (
+                <TableRow key={lot.id} className="text-[12px]">
+                  <TableCell className="py-1 font-medium">{lot.lot_name}</TableCell>
+                  <TableCell className="py-1">
+                    <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px]">{lot.disco}</span>
+                  </TableCell>
+                  <TableCell className="py-1 text-right font-mono text-[11px]">{fmt(lot.site_count)}</TableCell>
+                  <TableCell className="py-1 text-right font-mono text-[11px]">{fmt(lot.total_connections)}</TableCell>
+                  <TableCell className="py-1">
+                    <span className="inline-block rounded bg-amber-100 px-1.5 py-px text-[10px] font-medium text-amber-800">
+                      Pending Approval
+                    </span>
+                  </TableCell>
+                  <TableCell className="py-1">
+                    <div className="flex items-center gap-1.5">
+                      <Link href={`/lots/${lot.id}`}>
+                        <Button variant="outline" size="sm" className="h-5 px-2 text-[10px]">View Sites</Button>
+                      </Link>
                       <Button
-                        variant="outline"
                         size="sm"
-                        disabled={page === 0}
-                        onClick={() => setPage((p) => Math.max(0, p - 1))}
+                        className="h-5 px-2 text-[10px]"
+                        onClick={() => approveMutation.mutate(lot.id)}
+                        disabled={approveMutation.isPending}
                       >
-                        Previous
-                      </Button>
-                      <span className="flex items-center px-3 text-sm text-muted-foreground">
-                        Page {page + 1} of {totalPages}
-                      </span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={page >= totalPages - 1}
-                        onClick={() => setPage((p) => p + 1)}
-                      >
-                        Next
+                        Approve for Interconnection ✓
                       </Button>
                     </div>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </div>
+
+      {/* Approved Lots */}
+      <div className="mt-3 rounded border border-border bg-white">
+        <div className="flex items-center justify-between border-b border-border px-3 py-1.5">
+          <span className="text-[11px] font-semibold">Approved for Tender ({approvedLots.length})</span>
+          <span className="text-[10px] text-muted-foreground">
+            These lots have DisCo approval and can proceed to <Link href="/lots" className="text-primary underline">Tenders</Link>
+          </span>
+        </div>
+        {approvedLots.length === 0 ? (
+          <div className="p-6 text-center text-xs text-muted-foreground">
+            No lots approved yet. Approve pending lots above.
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow className="text-[11px]">
+                <TableHead className="py-1.5">Lot Name</TableHead>
+                <TableHead className="py-1.5">DisCo</TableHead>
+                <TableHead className="py-1.5 text-right">Sites</TableHead>
+                <TableHead className="py-1.5 text-right">Connections</TableHead>
+                <TableHead className="py-1.5">Tender Status</TableHead>
+                <TableHead className="py-1.5">Approved</TableHead>
+                <TableHead className="py-1.5">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {approvedLots.map((lot) => (
+                <TableRow key={lot.id} className="text-[12px]">
+                  <TableCell className="py-1 font-medium">{lot.lot_name}</TableCell>
+                  <TableCell className="py-1">
+                    <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px]">{lot.disco}</span>
+                  </TableCell>
+                  <TableCell className="py-1 text-right font-mono text-[11px]">{fmt(lot.site_count)}</TableCell>
+                  <TableCell className="py-1 text-right font-mono text-[11px]">{fmt(lot.total_connections)}</TableCell>
+                  <TableCell className="py-1">
+                    <span className={`inline-block rounded px-1.5 py-px text-[10px] font-medium ${
+                      lot.tender_status === "issued" ? "bg-blue-100 text-blue-800"
+                      : lot.tender_status === "draft" ? "bg-gray-100 text-gray-700"
+                      : lot.tender_status === "closed" ? "bg-amber-100 text-amber-800"
+                      : lot.tender_status === "awarded" ? "bg-green-100 text-green-800"
+                      : "bg-green-100 text-green-800"
+                    }`}>
+                      {lot.tender_status === "approved" ? "Ready for Tender" : formatLabel(lot.tender_status)}
+                    </span>
+                  </TableCell>
+                  <TableCell className="py-1 text-[10px] text-muted-foreground">
+                    {lot.approved_at ? new Date(lot.approved_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short" }) : "—"}
+                  </TableCell>
+                  <TableCell className="py-1">
+                    <Link href={lot.tender_status === "approved" || lot.tender_status === "none" ? "/lots" : `/lots/${lot.id}`}>
+                      <Button variant="outline" size="sm" className="h-5 px-2 text-[10px]">
+                        {lot.tender_status === "approved" ? "Go to Tenders →" : "View"}
+                      </Button>
+                    </Link>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </div>
     </div>
   );
 }

@@ -57,9 +57,20 @@ export function SettlementMap({
       attributionControl: false,
     });
 
-    L.tileLayer(
+    const light = L.tileLayer(
       "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
       { maxZoom: 18 }
+    ).addTo(map);
+
+    const satellite = L.tileLayer(
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      { maxZoom: 19, attribution: "Esri" }
+    );
+
+    L.control.layers(
+      { "Light": light, "Satellite": satellite },
+      {},
+      { position: "topright", collapsed: true }
     ).addTo(map);
 
     L.control
