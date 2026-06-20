@@ -52,6 +52,13 @@ export function SettlementMap({
   const onToggleRef = useRef(onToggleSelect);
   onToggleRef.current = onToggleSelect;
   const [distLineCounts, setDistLineCounts] = useState<Record<string, number>>({});
+  const layerGroupsRef = useRef<Record<string, L.LayerGroup>>({});
+  const [layerVisible, setLayerVisible] = useState<Record<string, boolean>>({
+    transmission: true,
+    "33kV": true,
+    "11kV": false,
+    substations: true,
+  });
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -78,14 +85,16 @@ export function SettlementMap({
     const dist11Group = L.layerGroup();
     const substationGroup = L.layerGroup().addTo(map);
 
+    layerGroupsRef.current = {
+      transmission: transmissionGroup,
+      "33kV": dist33Group,
+      "11kV": dist11Group,
+      substations: substationGroup,
+    };
+
     L.control.layers(
       { "Light": light, "Satellite": satellite },
-      {
-        "330kV / 132kV Transmission": transmissionGroup,
-        "33kV Primary Distribution": dist33Group,
-        "11kV Secondary Distribution": dist11Group,
-        "Substations": substationGroup,
-      },
+      {},
       { position: "topright", collapsed: true }
     ).addTo(map);
 
@@ -268,70 +277,65 @@ export function SettlementMap({
     }
   }, [settlements, selectedRanks, activeDisco]);
 
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    Object.entries(layerGroupsRef.current).forEach(([key, group]) => {
+      if (layerVisible[key] && !map.hasLayer(group)) {
+        map.addLayer(group);
+      } else if (!layerVisible[key] && map.hasLayer(group)) {
+        map.removeLayer(group);
+      }
+    });
+  }, [layerVisible]);
+
+  const toggleLayer = (key: string) => {
+    setLayerVisible((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
   return (
     <div className="relative h-full w-full overflow-hidden rounded-lg border border-border">
       <div ref={containerRef} className="h-full w-full" />
-      {/* Legend */}
-      <div className="absolute bottom-3 right-3 z-[1000] rounded-lg border border-border bg-white/95 px-3 py-2 shadow-sm backdrop-blur-sm">
-        <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-          Legend
-        </p>
-        <div className="flex flex-col gap-1">
+      {/* Legend — horizontal */}
+      <div className="absolute bottom-2 left-2 right-2 z-[1000] rounded-lg border border-border bg-white/95 px-3 py-1.5 shadow-sm backdrop-blur-sm">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5">
           {Object.entries(DISCO_COLORS).map(([name, color]) => (
-            <div key={name} className="flex items-center gap-2 text-xs">
-              <span
-                className="h-2.5 w-2.5 rounded-full"
-                style={{ backgroundColor: color }}
-              />
-              <span className="text-foreground">{name}</span>
+            <div key={name} className="flex items-center gap-1.5 text-[10px]">
+              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
+              <span>{name}</span>
             </div>
           ))}
-          <div className="my-0.5 border-t border-border" />
-          <div className="flex items-center gap-2 text-xs">
-            <span className="h-[2px] w-3 bg-[#C62828]" />
-            <span className="text-muted-foreground">330kV</span>
-          </div>
-          <div className="flex items-center gap-2 text-xs">
-            <span
-              className="h-[2px] w-3"
-              style={{
-                backgroundImage:
-                  "repeating-linear-gradient(90deg,#F57C00 0,#F57C00 3px,transparent 3px,transparent 5px)",
-              }}
-            />
-            <span className="text-muted-foreground">132kV</span>
-          </div>
-          <div className="flex items-center gap-2 text-xs">
-            <span className="h-[2px] w-3 bg-[#2196F3]" />
-            <span className="text-muted-foreground">
-              33kV{distLineCounts["33kV"] ? ` (${distLineCounts["33kV"].toLocaleString()})` : ""}
+          <span className="text-border">|</span>
+          <button onClick={() => toggleLayer("transmission")} className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors">
+            <span className={`relative inline-block h-3 w-[22px] rounded-full transition-colors ${layerVisible.transmission ? "bg-[#C62828]" : "bg-gray-300"}`}>
+              <span className={`absolute top-[1px] h-[10px] w-[10px] rounded-full bg-white shadow-sm transition-transform ${layerVisible.transmission ? "translate-x-[11px]" : "translate-x-[1px]"}`} />
             </span>
-          </div>
-          <div className="flex items-center gap-2 text-xs">
-            <span
-              className="h-[2px] w-3"
-              style={{
-                backgroundImage:
-                  "repeating-linear-gradient(90deg,#4CAF50 0,#4CAF50 2px,transparent 2px,transparent 4px)",
-              }}
-            />
-            <span className="text-muted-foreground">
-              11kV{distLineCounts["11kV"] ? ` (${distLineCounts["11kV"].toLocaleString()})` : ""}
+            <span className="h-[2px] w-3 bg-[#C62828]" />330/132kV
+          </button>
+          <button onClick={() => toggleLayer("33kV")} className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors">
+            <span className={`relative inline-block h-3 w-[22px] rounded-full transition-colors ${layerVisible["33kV"] ? "bg-[#2196F3]" : "bg-gray-300"}`}>
+              <span className={`absolute top-[1px] h-[10px] w-[10px] rounded-full bg-white shadow-sm transition-transform ${layerVisible["33kV"] ? "translate-x-[11px]" : "translate-x-[1px]"}`} />
             </span>
+            <span className="h-[2px] w-3 bg-[#2196F3]" />33kV{distLineCounts["33kV"] ? ` (${distLineCounts["33kV"].toLocaleString()})` : ""}
+          </button>
+          <button onClick={() => toggleLayer("11kV")} className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors">
+            <span className={`relative inline-block h-3 w-[22px] rounded-full transition-colors ${layerVisible["11kV"] ? "bg-[#4CAF50]" : "bg-gray-300"}`}>
+              <span className={`absolute top-[1px] h-[10px] w-[10px] rounded-full bg-white shadow-sm transition-transform ${layerVisible["11kV"] ? "translate-x-[11px]" : "translate-x-[1px]"}`} />
+            </span>
+            <span className="h-[2px] w-3" style={{ backgroundImage: "repeating-linear-gradient(90deg,#4CAF50 0,#4CAF50 2px,transparent 2px,transparent 4px)" }} />11kV{distLineCounts["11kV"] ? ` (${distLineCounts["11kV"].toLocaleString()})` : ""}
+          </button>
+          <button onClick={() => toggleLayer("substations")} className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors">
+            <span className={`relative inline-block h-3 w-[22px] rounded-full transition-colors ${layerVisible.substations ? "bg-[#FF9800]" : "bg-gray-300"}`}>
+              <span className={`absolute top-[1px] h-[10px] w-[10px] rounded-full bg-white shadow-sm transition-transform ${layerVisible.substations ? "translate-x-[11px]" : "translate-x-[1px]"}`} />
+            </span>
+            <span className="h-2 w-2 rounded-full bg-[#FF9800] border border-[#E65100]" />Substations
+          </button>
+          <span className="text-border">|</span>
+          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+            <span className="h-2 w-2 rounded-full bg-[#2E7D32]" />Selected
           </div>
-          <div className="flex items-center gap-2 text-xs">
-            <span className="h-2 w-2 rounded-full bg-[#FF9800] border border-[#E65100]" />
-            <span className="text-muted-foreground">Substation</span>
-          </div>
-          <div className="my-0.5 border-t border-border" />
-          <div className="flex items-center gap-2 text-xs">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#2E7D32]" />
-            <span className="text-muted-foreground">Selected</span>
-          </div>
+          <span className="ml-auto text-[8px] text-muted-foreground">KEDCO/World Bank NEAP 2016 + OSM</span>
         </div>
-        <p className="mt-1.5 text-[8px] text-muted-foreground leading-tight">
-          Distribution: KEDCO/World Bank NEAP 2016 + OSM
-        </p>
       </div>
       <style jsx global>{`
         .afcen-popup .leaflet-popup-content-wrapper {

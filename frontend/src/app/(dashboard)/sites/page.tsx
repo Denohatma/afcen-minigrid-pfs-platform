@@ -55,12 +55,6 @@ const MG_OPTIONS = [
   { value: "isolated", label: "Isolated" },
 ];
 
-const RISK_COLORS: Record<string, string> = {
-  low: "bg-green-100 text-green-800",
-  medium: "bg-amber-100 text-amber-800",
-  high: "bg-red-100 text-red-800",
-};
-
 function fmt(n: number) {
   return new Intl.NumberFormat("en-US").format(n);
 }
@@ -322,7 +316,6 @@ export default function SitesPage() {
                     <TableHead className="py-1 text-right">kWh</TableHead>
                     <TableHead className="py-1 text-right">km</TableHead>
                     <TableHead className="py-1 text-right">Score</TableHead>
-                    <TableHead className="py-1">Risk</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -345,11 +338,6 @@ export default function SitesPage() {
                       <TableCell className="py-0.5 text-right">
                         <span className={`font-mono text-[11px] font-semibold ${s.score >= 70 ? "text-green-700" : s.score >= 50 ? "text-amber-700" : "text-red-700"}`}>
                           {s.score.toFixed(1)}
-                        </span>
-                      </TableCell>
-                      <TableCell className="py-0.5">
-                        <span className={`inline-block rounded px-1 py-px text-[9px] font-medium ${RISK_COLORS[s.security_risk] ?? "bg-gray-100 text-gray-700"}`}>
-                          {s.security_risk}
                         </span>
                       </TableCell>
                     </TableRow>
