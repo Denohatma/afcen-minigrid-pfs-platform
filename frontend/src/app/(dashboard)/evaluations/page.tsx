@@ -3,10 +3,8 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { api } from "@/lib/api";
-import type { Lot } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -16,59 +14,32 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-/* ── Status badge colour maps ─────────────────────────────────────── */
-
-const TENDER_STATUS_COLORS: Record<string, string> = {
-  draft: "bg-gray-500/20 text-gray-300",
-  issued: "bg-emerald-500/20 text-emerald-400",
-  open: "bg-emerald-500/20 text-emerald-400",
-  closed: "bg-amber-500/20 text-amber-400",
-  under_evaluation: "bg-blue-500/20 text-blue-400",
-  awarded: "bg-primary text-white",
+const STATUS_COLORS: Record<string, string> = {
+  pending: "bg-gray-100 text-gray-700",
+  admin_check: "bg-amber-100 text-amber-800",
+  technical: "bg-blue-100 text-blue-800",
+  financial: "bg-indigo-100 text-indigo-800",
+  recommended: "bg-green-100 text-green-800",
+  awarded: "bg-green-100 text-green-800",
+  rejected: "bg-red-100 text-red-800",
+  submitted: "bg-blue-100 text-blue-800",
+  under_review: "bg-amber-100 text-amber-800",
 };
 
-const EVAL_STATUS_COLORS: Record<string, string> = {
-  pending: "bg-gray-500/20 text-gray-300",
-  "in progress": "bg-blue-500/20 text-blue-400",
-  complete: "bg-emerald-500/20 text-emerald-400",
-  admin_check: "bg-yellow-100 text-yellow-700",
-  technical: "bg-blue-500/20 text-blue-400",
-  financial: "bg-indigo-100 text-indigo-700",
-  recommended: "bg-emerald-100 text-emerald-700",
+const STAGE_RESPONSIBLE: Record<string, string> = {
+  pending: "—",
+  admin_check: "PMU Admin Officer",
+  technical: "Technical Evaluator",
+  financial: "Financial Evaluator",
+  recommended: "Evaluation Committee",
+  awarded: "REA PMU Director",
+  submitted: "Bidder",
+  under_review: "Evaluation Committee",
 };
 
-const NO_OBJECTION_COLORS: Record<string, string> = {
-  not_submitted: "bg-gray-500/20 text-gray-300",
-  draft: "bg-gray-500/20 text-gray-300",
-  submitted: "bg-yellow-100 text-yellow-700",
-  approved: "bg-emerald-500/20 text-emerald-400",
-  rejected: "bg-red-500/20 text-red-400",
-};
-
-const FLAG_SEVERITY_COLORS: Record<string, string> = {
-  none: "bg-emerald-500/20 text-emerald-400",
-  low: "bg-yellow-100 text-yellow-700",
-  medium: "bg-orange-100 text-orange-700",
-  high: "bg-red-500/20 text-red-400",
-};
-
-/* ── Helpers ──────────────────────────────────────────────────────── */
-
-function tenderStatusLabel(lot: Lot): string {
-  if (!lot.tender_status || lot.tender_status === "none") return "No tender";
-  return lot.tender_status.replace(/_/g, " ");
+function formatLabel(s: string) {
+  return s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
-
-function evaluationStatusLabel(lot: Lot): string {
-  if (!lot.tender_status || lot.tender_status === "none") return "—";
-  return lot.tender_status === "awarded"
-    ? "complete"
-    : lot.tender_status === "under_evaluation"
-    ? "in progress"
-    : "pending";
-}
-
-/* ── Page component ───────────────────────────────────────────────── */
 
 export default function EvaluationsPage() {
   const { data: lotsData, isLoading } = useQuery({
@@ -76,232 +47,98 @@ export default function EvaluationsPage() {
     queryFn: () => api.lots.list(),
   });
 
-  const lots = lotsData?.lots || [];
+  const { data: biddersData } = useQuery({
+    queryKey: ["bidders"],
+    queryFn: () => api.bidders.list(),
+  });
 
-  /* Summary counters */
-  const withTender = lots.filter((l) => l.tender_status && l.tender_status !== "none");
-  const underEval = lots.filter(
-    (l) => l.tender_status === "under_evaluation"
+  const lots = lotsData?.lots ?? [];
+  const bidders = biddersData?.bidders ?? [];
+
+  const lotsWithTender = lots.filter(
+    (l) => l.tender_status && l.tender_status !== "none" && l.tender_status !== "draft"
   );
-  const awarded = lots.filter((l) => l.tender_status === "awarded");
+
+  interface EvalRow {
+    lotId: string;
+    lotName: string;
+    disco: string;
+    bidderName: string;
+    bidderId: string;
+    status: string;
+    responsible: string;
+  }
+
+  const evalRows: EvalRow[] = lotsWithTender.flatMap((lot) => {
+    if (bidders.length === 0) {
+      const status = lot.tender_status === "awarded" ? "awarded" : lot.tender_status === "issued" ? "pending" : "under_review";
+      return [{ lotId: lot.id, lotName: lot.lot_name, disco: lot.disco, bidderName: "Awaiting bids", bidderId: "", status, responsible: STAGE_RESPONSIBLE[status] || "—" }];
+    }
+    return bidders.map((bidder) => {
+      const status = lot.tender_status === "awarded" ? "awarded" : lot.tender_status === "issued" ? "submitted" : "under_review";
+      return { lotId: lot.id, lotName: lot.lot_name, disco: lot.disco, bidderName: bidder.company_name, bidderId: bidder.id, status, responsible: STAGE_RESPONSIBLE[status] || "—" };
+    });
+  });
+
+  const totalBids = evalRows.filter((r) => r.bidderId).length;
+  const underReview = evalRows.filter((r) => ["under_review", "admin_check", "technical", "financial"].includes(r.status)).length;
+  const awarded = evalRows.filter((r) => r.status === "awarded").length;
 
   return (
-    <div>
-      {/* ── Header ─────────────────────────────────────────────────── */}
+    <div className="text-[13px]">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading text-2xl font-bold">
-            Bid Evaluation &amp; No-Objection
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            5-stage evaluation: Administrative responsiveness, Technical
-            scoring, Financial scoring, AI flag review, and World Bank
-            no-objection
+          <h1 className="font-heading text-base font-bold">Bid Evaluation</h1>
+          <p className="text-[11px] text-muted-foreground">
+            {lotsWithTender.length} lots &middot; {totalBids} bids &middot; {underReview} under review &middot; {awarded} awarded
           </p>
         </div>
       </div>
 
-      {/* ── Summary cards ──────────────────────────────────────────── */}
-      <div className="mt-6 grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">
-              Total Lots
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{lots.length}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">
-              With Tenders
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{withTender.length}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">
-              Under Evaluation
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-blue-400">
-              {underEval.length}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">
-              Awarded
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-emerald-400">
-              {awarded.length}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* ── Lots table ─────────────────────────────────────────────── */}
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>Lot Evaluation Overview</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex items-center justify-center py-12 text-muted-foreground">
-              Loading lots...
-            </div>
-          ) : lots.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16">
-              <svg
-                className="h-12 w-12 text-muted-foreground/50 mb-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-              <h3 className="font-semibold text-lg">No lots found</h3>
-              <p className="text-muted-foreground text-sm mt-1">
-                Create lots and launch tenders before evaluating bids
-              </p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Lot Name</TableHead>
-                  <TableHead>DisCo</TableHead>
-                  <TableHead>Sites</TableHead>
-                  <TableHead>Tender Status</TableHead>
-                  <TableHead>Evaluation Status</TableHead>
-                  <TableHead>No-Objection</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+      <div className="mt-2 rounded border border-border bg-white">
+        {isLoading ? (
+          <div className="p-4 text-center text-xs text-muted-foreground">Loading...</div>
+        ) : evalRows.length === 0 ? (
+          <div className="p-6 text-center text-xs text-muted-foreground">
+            No bids to evaluate. <Link href="/lots" className="text-primary underline">Issue tenders</Link> first.
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow className="text-[11px]">
+                <TableHead className="py-1.5">Lot Name</TableHead>
+                <TableHead className="py-1.5">DisCo</TableHead>
+                <TableHead className="py-1.5">Bidder Name</TableHead>
+                <TableHead className="py-1.5">Status</TableHead>
+                <TableHead className="py-1.5">Responsible Person</TableHead>
+                <TableHead className="py-1.5">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {evalRows.map((row, idx) => (
+                <TableRow key={`${row.lotId}-${row.bidderId || idx}`} className="text-[12px]">
+                  <TableCell className="py-1 font-medium">{row.lotName}</TableCell>
+                  <TableCell className="py-1 font-mono text-[10px]">{row.disco}</TableCell>
+                  <TableCell className="py-1">
+                    {row.bidderId ? row.bidderName : <span className="italic text-muted-foreground">{row.bidderName}</span>}
+                  </TableCell>
+                  <TableCell className="py-1">
+                    <span className={`inline-block rounded px-1.5 py-px text-[10px] font-medium ${STATUS_COLORS[row.status] ?? "bg-gray-100 text-gray-700"}`}>
+                      {formatLabel(row.status)}
+                    </span>
+                  </TableCell>
+                  <TableCell className="py-1 text-muted-foreground">{row.responsible}</TableCell>
+                  <TableCell className="py-1">
+                    <Link href={`/lots/${row.lotId}`}>
+                      <Button variant="outline" size="sm" className="h-5 px-2 text-[10px]">View Bid</Button>
+                    </Link>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {lots.map((lot) => {
-                  const hasTender = !!lot.tender_status && lot.tender_status !== "none";
-                  const tenderStatus = lot.tender_status || "";
-                  const evalStatus = evaluationStatusLabel(lot);
-
-                  return (
-                    <TableRow key={lot.id}>
-                      {/* Lot Name */}
-                      <TableCell className="font-medium">
-                        {lot.lot_name}
-                      </TableCell>
-
-                      {/* DisCo */}
-                      <TableCell>{lot.disco}</TableCell>
-
-                      {/* Site count */}
-                      <TableCell>{lot.site_count}</TableCell>
-
-                      {/* Tender Status */}
-                      <TableCell>
-                        {hasTender ? (
-                          <Badge
-                            className={
-                              TENDER_STATUS_COLORS[tenderStatus] ||
-                              "bg-gray-500/20 text-gray-300"
-                            }
-                          >
-                            {tenderStatusLabel(lot)}
-                          </Badge>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">
-                            No tender
-                          </span>
-                        )}
-                      </TableCell>
-
-                      {/* Evaluation Status */}
-                      <TableCell>
-                        {hasTender ? (
-                          <Badge
-                            className={
-                              EVAL_STATUS_COLORS[evalStatus] ||
-                              "bg-gray-500/20 text-gray-300"
-                            }
-                          >
-                            {evalStatus}
-                          </Badge>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">
-                            —
-                          </span>
-                        )}
-                      </TableCell>
-
-                      {/* No-Objection */}
-                      <TableCell>
-                        {hasTender &&
-                        lot.tender_status === "awarded" ? (
-                          <Badge
-                            className={
-                              NO_OBJECTION_COLORS["approved"] ||
-                              "bg-emerald-500/20 text-emerald-400"
-                            }
-                          >
-                            approved
-                          </Badge>
-                        ) : hasTender ? (
-                          <Badge
-                            className={
-                              NO_OBJECTION_COLORS["not_submitted"]
-                            }
-                          >
-                            not submitted
-                          </Badge>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">
-                            —
-                          </span>
-                        )}
-                      </TableCell>
-
-                      {/* Actions */}
-                      <TableCell className="text-right">
-                        {hasTender ? (
-                          <Link
-                            href={`/evaluations/${lot.id}`}
-                          >
-                            <Button size="sm" variant="outline">
-                              View
-                            </Button>
-                          </Link>
-                        ) : (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            disabled
-                          >
-                            View
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </div>
     </div>
   );
 }

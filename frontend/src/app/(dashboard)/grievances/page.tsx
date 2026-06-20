@@ -15,19 +15,19 @@ import {
 } from "@/components/ui/table";
 
 const SEVERITY_COLORS: Record<string, string> = {
-  low: "bg-emerald-500/20 text-emerald-400",
-  medium: "bg-amber-500/20 text-amber-400",
-  high: "bg-red-500/20 text-red-400",
+  low: "bg-green-100 text-green-800",
+  medium: "bg-amber-100 text-amber-800",
+  high: "bg-red-100 text-red-800",
   critical: "bg-red-500/30 text-red-300",
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  received: "bg-gray-500/20 text-gray-300",
-  acknowledged: "bg-blue-500/20 text-blue-400",
-  investigating: "bg-amber-500/20 text-amber-400",
-  resolved: "bg-emerald-500/20 text-emerald-400",
-  closed: "bg-gray-500/20 text-gray-300",
-  escalated: "bg-red-500/20 text-red-400",
+  received: "bg-gray-100 text-gray-700",
+  acknowledged: "bg-blue-100 text-blue-800",
+  investigating: "bg-amber-100 text-amber-800",
+  resolved: "bg-green-100 text-green-800",
+  closed: "bg-gray-100 text-gray-700",
+  escalated: "bg-red-100 text-red-800",
 };
 
 const STATUS_OPTIONS = [
@@ -108,7 +108,7 @@ export default function GrievancesPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-amber-400">
+            <p className="text-2xl font-bold text-amber-700">
               {dashboard?.open ?? 0}
             </p>
           </CardContent>
@@ -120,7 +120,7 @@ export default function GrievancesPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-emerald-400">
+            <p className="text-2xl font-bold text-green-700">
               {dashboard?.resolved ?? 0}
             </p>
           </CardContent>
@@ -132,7 +132,7 @@ export default function GrievancesPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-red-400">
+            <p className="text-2xl font-bold text-red-700">
               {dashboard?.escalated ?? 0}
             </p>
           </CardContent>
@@ -144,7 +144,7 @@ export default function GrievancesPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-red-400">
+            <p className="text-2xl font-bold text-red-700">
               {dashboard?.sea_sh_flagged ?? 0}
             </p>
           </CardContent>
@@ -212,7 +212,7 @@ export default function GrievancesPage() {
                       <Badge
                         className={
                           SEVERITY_COLORS[g.severity] ??
-                          "bg-gray-500/20 text-gray-300"
+                          "bg-gray-100 text-gray-700"
                         }
                       >
                         {g.severity}
@@ -238,7 +238,7 @@ export default function GrievancesPage() {
                       <Badge
                         className={
                           STATUS_COLORS[g.status] ??
-                          "bg-gray-500/20 text-gray-300"
+                          "bg-gray-100 text-gray-700"
                         }
                       >
                         {g.status.replace(/_/g, " ")}

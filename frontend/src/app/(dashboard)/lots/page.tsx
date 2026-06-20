@@ -26,28 +26,28 @@ const DISCO_OPTIONS = [
 ];
 
 const DATA_ROOM_COLORS: Record<string, string> = {
-  not_started: "bg-gray-500/20 text-gray-300",
-  in_progress: "bg-amber-500/20 text-amber-400",
-  complete: "bg-emerald-500/20 text-emerald-400",
+  not_started: "bg-gray-100 text-gray-700",
+  in_progress: "bg-amber-100 text-amber-800",
+  complete: "bg-green-100 text-green-800",
 };
 
 const TENDER_STATUS_COLORS: Record<string, string> = {
-  draft: "bg-gray-500/20 text-gray-300",
-  issued: "bg-blue-500/20 text-blue-400",
-  closed: "bg-amber-500/20 text-amber-400",
-  awarded: "bg-emerald-500/20 text-emerald-400",
+  draft: "bg-gray-100 text-gray-700",
+  issued: "bg-blue-100 text-blue-800",
+  closed: "bg-amber-100 text-amber-800",
+  awarded: "bg-green-100 text-green-800",
 };
 
 const QUALIFICATION_COLORS: Record<string, string> = {
-  pending: "bg-amber-500/20 text-amber-400",
-  approved: "bg-emerald-500/20 text-emerald-400",
-  rejected: "bg-red-500/20 text-red-400",
+  pending: "bg-amber-100 text-amber-800",
+  approved: "bg-green-100 text-green-800",
+  rejected: "bg-red-100 text-red-800",
 };
 
 const KYC_COLORS: Record<string, string> = {
-  pending: "bg-amber-500/20 text-amber-400",
-  verified: "bg-emerald-500/20 text-emerald-400",
-  failed: "bg-red-500/20 text-red-400",
+  pending: "bg-amber-100 text-amber-800",
+  verified: "bg-green-100 text-green-800",
+  failed: "bg-red-100 text-red-800",
 };
 
 function formatNum(n: number) {
@@ -218,13 +218,10 @@ export default function LotsPage() {
                     <TableRow>
                       <TableHead>Lot Name</TableHead>
                       <TableHead>DisCo</TableHead>
-                      <TableHead className="text-right">Sites</TableHead>
-                      <TableHead className="text-right">Connections</TableHead>
-                      <TableHead className="text-right">Grant Ceiling</TableHead>
-                      <TableHead>Data Room</TableHead>
+                      <TableHead className="text-right">Connections (Est.)</TableHead>
                       <TableHead>Tender Status</TableHead>
-                      <TableHead>Approved</TableHead>
-                      <TableHead>Actions</TableHead>
+                      <TableHead className="text-center">Bids Received</TableHead>
+                      <TableHead>Lot Details</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -232,62 +229,37 @@ export default function LotsPage() {
                       <TableRow key={lot.id}>
                         <TableCell>
                           <div className="font-medium">{lot.lot_name}</div>
-                          <div className="text-xs text-muted-foreground mt-0.5">
-                            {lot.state}
+                          <div className="mt-0.5 text-xs text-muted-foreground">
+                            {lot.state} &middot; {formatNum(lot.site_count)} sites
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className="text-xs font-mono">
+                          <Badge variant="outline" className="font-mono text-xs">
                             {lot.disco}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right font-mono text-sm">
-                          {formatNum(lot.site_count)}
-                        </TableCell>
-                        <TableCell className="text-right font-mono text-sm">
                           {formatNum(lot.total_connections)}
-                        </TableCell>
-                        <TableCell className="text-right font-mono text-sm">
-                          <div>{formatUSD(lot.grant_ceiling_usd)}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {(lot.grant_ceiling_pct * 100).toFixed(0)}%
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            className={`text-xs ${
-                              DATA_ROOM_COLORS[lot.data_room_status] ??
-                              "bg-gray-500/20 text-gray-300"
-                            }`}
-                          >
-                            {formatLabel(lot.data_room_status)}
-                          </Badge>
                         </TableCell>
                         <TableCell>
                           <Badge
                             className={`text-xs ${
                               TENDER_STATUS_COLORS[lot.tender_status] ??
-                              "bg-gray-500/20 text-gray-300"
+                              "bg-gray-100 text-gray-700"
                             }`}
                           >
                             {formatLabel(lot.tender_status)}
                           </Badge>
                         </TableCell>
-                        <TableCell>
-                          {lot.approval_to_tender ? (
-                            <Badge className="text-xs bg-emerald-500/20 text-emerald-400">
-                              Yes
-                            </Badge>
-                          ) : (
-                            <Badge className="text-xs bg-gray-500/20 text-gray-400">
-                              No
-                            </Badge>
-                          )}
+                        <TableCell className="text-center font-mono text-sm">
+                          {lot.tender_status === "closed" || lot.tender_status === "awarded"
+                            ? bidders.filter((b) => (b as any).lot_id === lot.id).length || "—"
+                            : "—"}
                         </TableCell>
                         <TableCell>
                           <Link href={`/lots/${lot.id}`}>
                             <Button variant="outline" size="sm">
-                              View
+                              View Sites & Details
                             </Button>
                           </Link>
                         </TableCell>
@@ -359,7 +331,7 @@ export default function LotsPage() {
                           <Badge
                             className={`text-xs ${
                               KYC_COLORS[bidder.kyc_status] ??
-                              "bg-gray-500/20 text-gray-300"
+                              "bg-gray-100 text-gray-700"
                             }`}
                           >
                             {formatLabel(bidder.kyc_status)}
@@ -369,7 +341,7 @@ export default function LotsPage() {
                           <Badge
                             className={`text-xs ${
                               QUALIFICATION_COLORS[bidder.qualification_status] ??
-                              "bg-gray-500/20 text-gray-300"
+                              "bg-gray-100 text-gray-700"
                             }`}
                           >
                             {formatLabel(bidder.qualification_status)}

@@ -69,7 +69,7 @@ export default function SettlementLedgerPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold text-emerald-400">
+              <p className="text-2xl font-bold text-green-700">
                 {formatUSD(stats.total_paid ?? 0)}
               </p>
             </CardContent>
@@ -81,7 +81,7 @@ export default function SettlementLedgerPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold text-amber-400">
+              <p className="text-2xl font-bold text-amber-700">
                 {formatUSD(stats.outstanding ?? 0)}
               </p>
             </CardContent>
@@ -93,7 +93,7 @@ export default function SettlementLedgerPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold text-red-400">
+              <p className="text-2xl font-bold text-red-700">
                 {formatNum(stats.disputes_open ?? 0)}
               </p>
             </CardContent>
@@ -159,8 +159,8 @@ export default function SettlementLedgerPage() {
                       <Badge
                         className={`text-xs ${
                           entry.payment_status === "confirmed"
-                            ? "bg-emerald-500/20 text-emerald-400"
-                            : "bg-gray-500/20 text-gray-400"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-gray-100 text-gray-700"
                         }`}
                       >
                         {entry.payment_status}
@@ -171,8 +171,8 @@ export default function SettlementLedgerPage() {
                         <Badge
                           className={`text-xs ${
                             entry.dispute_status === "resolved"
-                              ? "bg-emerald-500/20 text-emerald-400"
-                              : "bg-red-500/20 text-red-400"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
                           }`}
                         >
                           {entry.dispute_status}

@@ -11,9 +11,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 const TENDER_STATUS_COLORS: Record<string, string> = {
-  draft: "bg-gray-500/20 text-gray-300",
-  issued: "bg-emerald-500/20 text-emerald-400",
-  closed: "bg-amber-500/20 text-amber-400",
+  draft: "bg-gray-100 text-gray-700",
+  issued: "bg-green-100 text-green-800",
+  closed: "bg-amber-100 text-amber-800",
   awarded: "bg-primary text-white",
 };
 
@@ -127,7 +127,7 @@ export default function LotDetailPage() {
 
       {actionMsg && (
         <div className={`mt-4 rounded-md p-3 text-sm ${
-          actionMsg.startsWith("Error") ? "bg-red-500/10 border border-red-500/30 text-red-400" : "bg-green-500/10 border border-green-500/30 text-emerald-400"
+          actionMsg.startsWith("Error") ? "bg-red-500/10 border border-red-500/30 text-red-700" : "bg-green-500/10 border border-green-500/30 text-green-700"
         }`}>
           {actionMsg}
         </div>
@@ -149,7 +149,7 @@ export default function LotDetailPage() {
             <CardTitle className="text-sm text-muted-foreground">Approved</CardTitle>
           </CardHeader>
           <CardContent>
-            <Badge className={lotData.approval_to_tender ? "bg-emerald-500/20 text-emerald-400" : "bg-gray-500/20 text-gray-400"}>
+            <Badge className={lotData.approval_to_tender ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}>
               {lotData.approval_to_tender ? "Yes" : "No"}
             </Badge>
           </CardContent>
@@ -159,7 +159,7 @@ export default function LotDetailPage() {
             <CardTitle className="text-sm text-muted-foreground">Tender Status</CardTitle>
           </CardHeader>
           <CardContent>
-            <Badge className={TENDER_STATUS_COLORS[lotData.tender_status] ?? "bg-gray-500/20 text-gray-300"}>
+            <Badge className={TENDER_STATUS_COLORS[lotData.tender_status] ?? "bg-gray-100 text-gray-700"}>
               {lotData.tender_status?.replace(/_/g, " ")}
             </Badge>
           </CardContent>
@@ -169,7 +169,7 @@ export default function LotDetailPage() {
             <CardTitle className="text-sm text-muted-foreground">Data Room</CardTitle>
           </CardHeader>
           <CardContent>
-            <Badge className="bg-gray-500/20 text-gray-300">
+            <Badge className="bg-gray-100 text-gray-700">
               {lotData.data_room_status?.replace(/_/g, " ")}
             </Badge>
           </CardContent>
@@ -207,7 +207,7 @@ export default function LotDetailPage() {
         <CardContent className="space-y-4">
           {/* Step 1: Approve for tendering */}
           {!lotData.approval_to_tender && (
-            <div className="flex items-center justify-between p-4 rounded-md border border-amber-500/30 bg-amber-500/10">
+            <div className="flex items-center justify-between p-4 rounded-md border border-amber-200 bg-amber-50">
               <div>
                 <p className="font-medium">Step 1: Approve for Tendering</p>
                 <p className="text-sm text-muted-foreground">REA PMU must approve this lot before a tender can be created</p>
@@ -275,12 +275,12 @@ export default function LotDetailPage() {
           {lotData.tender_status === "issued" && (
             <div className="flex items-center justify-between p-4 rounded-md border border-green-500/30 bg-green-500/10">
               <div>
-                <p className="font-medium text-emerald-400">Tender Issued</p>
+                <p className="font-medium text-green-700">Tender Issued</p>
                 <p className="text-sm text-muted-foreground">
                   This lot is now open for bids. Bidders can submit proposals.
                 </p>
               </div>
-              <Badge className="bg-emerald-500/20 text-emerald-400 text-sm">Live</Badge>
+              <Badge className="bg-green-100 text-green-800 text-sm">Live</Badge>
             </div>
           )}
         </CardContent>

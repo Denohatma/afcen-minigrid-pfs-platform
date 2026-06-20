@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import Link from "next/link";
 import { api } from "@/lib/api";
 import { DiscoReadiness } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const STATUS_OPTIONS = [
   { value: "", label: "All Statuses" },
@@ -26,10 +28,17 @@ const STATUS_OPTIONS = [
 ];
 
 const STATUS_COLORS: Record<string, string> = {
-  not_started: "bg-gray-500/20 text-gray-300",
-  in_progress: "bg-amber-500/20 text-amber-400",
-  verified: "bg-emerald-500/20 text-emerald-400",
-  flagged: "bg-red-500/20 text-red-400",
+  not_started: "bg-gray-100 text-gray-700",
+  in_progress: "bg-amber-100 text-amber-800",
+  verified: "bg-green-100 text-green-800",
+  flagged: "bg-red-100 text-red-800",
+};
+
+const REQUEST_STATUS_COLORS: Record<string, string> = {
+  pending: "bg-amber-100 text-amber-800",
+  approved: "bg-green-100 text-green-800",
+  rejected: "bg-red-100 text-red-800",
+  data_shared: "bg-blue-100 text-blue-800",
 };
 
 function statusLabel(status: string) {
@@ -65,9 +74,15 @@ export default function DiscoReadinessPage() {
     queryFn: () => api.discoReadiness.dashboard(),
   });
 
+  const { data: lotsData } = useQuery({
+    queryKey: ["lots"],
+    queryFn: () => api.lots.list({}),
+  });
+
   const items: DiscoReadiness[] = data?.items ?? [];
   const total = data?.total ?? 0;
   const totalPages = Math.ceil(total / pageSize);
+  const lots: Array<Record<string, any>> = ((lotsData as any)?.lots ?? []) as any;
 
   const stats = dashboard as Record<string, any> | undefined;
 
@@ -81,11 +96,10 @@ export default function DiscoReadinessPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-heading text-2xl font-bold">
-            DisCo Readiness & Interconnection
+            DisCo Readiness & Data Sharing
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Track distribution company readiness milestones across all minigrid
-            sites
+          <p className="mt-1 text-sm text-muted-foreground">
+            Track distribution company readiness milestones, data requests, and lot approvals
           </p>
         </div>
       </div>
@@ -107,7 +121,7 @@ export default function DiscoReadinessPage() {
             className={`cursor-pointer transition-all ${
               statusFilter === "verified"
                 ? "ring-2 ring-primary border-primary"
-                : "hover:border-primary/30"
+                : "hover:border-primary/40"
             }`}
             onClick={() => {
               setStatusFilter(statusFilter === "verified" ? "" : "verified");
@@ -120,7 +134,7 @@ export default function DiscoReadinessPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold text-emerald-400">
+              <p className="text-2xl font-bold text-green-700">
                 {stats.verified ?? 0}
               </p>
             </CardContent>
@@ -129,7 +143,7 @@ export default function DiscoReadinessPage() {
             className={`cursor-pointer transition-all ${
               statusFilter === "in_progress"
                 ? "ring-2 ring-primary border-primary"
-                : "hover:border-primary/30"
+                : "hover:border-primary/40"
             }`}
             onClick={() => {
               setStatusFilter(
@@ -144,7 +158,7 @@ export default function DiscoReadinessPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold text-amber-400">
+              <p className="text-2xl font-bold text-amber-700">
                 {stats.in_progress ?? 0}
               </p>
             </CardContent>
@@ -153,7 +167,7 @@ export default function DiscoReadinessPage() {
             className={`cursor-pointer transition-all ${
               statusFilter === "flagged"
                 ? "ring-2 ring-primary border-primary"
-                : "hover:border-primary/30"
+                : "hover:border-primary/40"
             }`}
             onClick={() => {
               setStatusFilter(statusFilter === "flagged" ? "" : "flagged");
@@ -166,7 +180,7 @@ export default function DiscoReadinessPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold text-red-400">
+              <p className="text-2xl font-bold text-red-700">
                 {stats.flagged ?? 0}
               </p>
             </CardContent>
@@ -174,190 +188,344 @@ export default function DiscoReadinessPage() {
         </div>
       )}
 
-      {/* Filters */}
-      <Card className="mt-6 mb-4">
-        <CardContent className="pt-4">
-          <div className="grid gap-3 md:grid-cols-3">
-            <div>
-              <Label className="text-xs">Overall Status</Label>
-              <select
-                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
-                value={statusFilter}
-                onChange={(e) => {
-                  setStatusFilter(e.target.value);
-                  setPage(0);
-                }}
-              >
-                {STATUS_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex items-end">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-9 px-3 text-xs"
-                onClick={resetFilters}
-              >
-                Reset
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="lots" className="mt-6">
+        <TabsList>
+          <TabsTrigger value="lots">
+            Lots & Data Requests ({lots.length})
+          </TabsTrigger>
+          <TabsTrigger value="readiness">
+            Readiness Tracker ({total})
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Table */}
-      <Card>
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="p-8 text-center text-muted-foreground">
-              Loading disco readiness records...
-            </div>
-          ) : items.length === 0 ? (
-            <div className="p-8 text-center text-muted-foreground">
-              No records match your filters.{" "}
-              <button
-                className="text-primary underline"
-                onClick={resetFilters}
-              >
-                Reset filters
-              </button>
-            </div>
-          ) : (
-            <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Site ID</TableHead>
-                    <TableHead>Feeder Data</TableHead>
-                    <TableHead>POI</TableHead>
-                    <TableHead>Bulk Meter</TableHead>
-                    <TableHead>Customer Data</TableHead>
-                    <TableHead>Settlement Terms</TableHead>
-                    <TableHead>Tripartite</TableHead>
-                    <TableHead>Overall Status</TableHead>
-                    <TableHead>Last Updated</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {items.map((r) => (
-                    <TableRow key={r.id}>
-                      <TableCell className="font-medium font-mono text-sm">
-                        {r.site_id}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          className={`text-xs ${
-                            STATUS_COLORS[r.feeder_data_status] ??
-                            "bg-gray-500/20 text-gray-300"
-                          }`}
-                        >
-                          {statusLabel(r.feeder_data_status)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          className={`text-xs ${
-                            STATUS_COLORS[r.poi_status] ??
-                            "bg-gray-500/20 text-gray-300"
-                          }`}
-                        >
-                          {statusLabel(r.poi_status)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          className={`text-xs ${
-                            STATUS_COLORS[r.bulk_meter_status] ??
-                            "bg-gray-500/20 text-gray-300"
-                          }`}
-                        >
-                          {statusLabel(r.bulk_meter_status)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          className={`text-xs ${
-                            STATUS_COLORS[r.customer_data_status] ??
-                            "bg-gray-500/20 text-gray-300"
-                          }`}
-                        >
-                          {statusLabel(r.customer_data_status)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          className={`text-xs ${
-                            STATUS_COLORS[r.settlement_terms_status] ??
-                            "bg-gray-500/20 text-gray-300"
-                          }`}
-                        >
-                          {statusLabel(r.settlement_terms_status)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          className={`text-xs ${
-                            STATUS_COLORS[r.tripartite_status] ??
-                            "bg-gray-500/20 text-gray-300"
-                          }`}
-                        >
-                          {statusLabel(r.tripartite_status)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          className={`text-xs ${
-                            STATUS_COLORS[r.overall_status] ??
-                            "bg-gray-500/20 text-gray-300"
-                          }`}
-                        >
-                          {statusLabel(r.overall_status)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {formatDate(r.updated_at)}
-                      </TableCell>
+        {/* Lots & Data Request Status Tab */}
+        <TabsContent value="lots" className="mt-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">
+                Lot Data Request & DisCo Response Status
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">
+                Track which lots have been sent to DisCos for approval and data sharing with bidders
+              </p>
+            </CardHeader>
+            <CardContent className="p-0">
+              {lots.length === 0 ? (
+                <div className="p-8 text-center text-sm text-muted-foreground">
+                  No lots created yet. Go to{" "}
+                  <Link href="/sites" className="text-primary underline">
+                    Sites
+                  </Link>{" "}
+                  to select settlements and create a lot.
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Lot Name</TableHead>
+                      <TableHead>DisCo</TableHead>
+                      <TableHead className="text-center">Sites</TableHead>
+                      <TableHead className="text-center">Connections</TableHead>
+                      <TableHead>Data Request</TableHead>
+                      <TableHead>DisCo Response</TableHead>
+                      <TableHead>Tender Status</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {lots.map((lot) => {
+                      const isApproved = lot.approved;
+                      const tenderStatus = lot.tender_status || "none";
+                      const dataRequestSent = isApproved || tenderStatus !== "none";
+                      const dataRequestStatus = dataRequestSent
+                        ? isApproved
+                          ? "approved"
+                          : "pending"
+                        : "not_sent";
+                      const discoResponse = isApproved
+                        ? tenderStatus === "issued"
+                          ? "data_shared"
+                          : "approved"
+                        : dataRequestSent
+                          ? "pending"
+                          : "not_sent";
 
-              {/* Pagination */}
-              <div className="flex items-center justify-between border-t px-4 py-3">
-                <p className="text-sm text-muted-foreground">
-                  Showing {page * pageSize + 1}–
-                  {Math.min((page + 1) * pageSize, total)} of {total} records
-                </p>
-                <div className="flex gap-2">
+                      return (
+                        <TableRow key={lot.id}>
+                          <TableCell>
+                            <Link
+                              href={`/lots/${lot.id}`}
+                              className="font-medium text-primary hover:underline"
+                            >
+                              {lot.name}
+                            </Link>
+                            {lot.disco_name && (
+                              <div className="text-xs text-muted-foreground">
+                                {lot.disco_name}
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="text-xs">
+                              {lot.disco || "—"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-center font-mono text-sm">
+                            {lot.sites_count ?? lot.sites?.length ?? 0}
+                          </TableCell>
+                          <TableCell className="text-center font-mono text-sm">
+                            {(lot.total_connections ?? 0).toLocaleString()}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              className={`text-xs ${
+                                dataRequestStatus === "approved"
+                                  ? "bg-green-100 text-green-800"
+                                  : dataRequestStatus === "pending"
+                                    ? "bg-amber-100 text-amber-800"
+                                    : "bg-gray-100 text-gray-700"
+                              }`}
+                            >
+                              {dataRequestStatus === "not_sent"
+                                ? "Not Sent"
+                                : statusLabel(dataRequestStatus)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              className={`text-xs ${
+                                REQUEST_STATUS_COLORS[discoResponse] ??
+                                "bg-gray-100 text-gray-700"
+                              }`}
+                            >
+                              {discoResponse === "not_sent"
+                                ? "Awaiting Request"
+                                : discoResponse === "data_shared"
+                                  ? "Data Shared"
+                                  : statusLabel(discoResponse)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              className={`text-xs ${
+                                tenderStatus === "issued"
+                                  ? "bg-green-100 text-green-800"
+                                  : tenderStatus === "draft"
+                                    ? "bg-blue-100 text-blue-800"
+                                    : "bg-gray-100 text-gray-700"
+                              }`}
+                            >
+                              {tenderStatus === "none"
+                                ? "No Tender"
+                                : statusLabel(tenderStatus)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Link href={`/lots/${lot.id}`}>
+                              <Button variant="outline" size="sm" className="h-7 text-xs">
+                                View
+                              </Button>
+                            </Link>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Readiness Tracker Tab */}
+        <TabsContent value="readiness" className="mt-4">
+          {/* Filters */}
+          <Card className="mb-4">
+            <CardContent className="pt-4">
+              <div className="grid gap-3 md:grid-cols-3">
+                <div>
+                  <Label className="text-xs">Overall Status</Label>
+                  <select
+                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                    value={statusFilter}
+                    onChange={(e) => {
+                      setStatusFilter(e.target.value);
+                      setPage(0);
+                    }}
+                  >
+                    {STATUS_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex items-end">
                   <Button
                     variant="outline"
                     size="sm"
-                    disabled={page === 0}
-                    onClick={() => setPage((p) => Math.max(0, p - 1))}
+                    className="h-9 px-3 text-xs"
+                    onClick={resetFilters}
                   >
-                    Previous
-                  </Button>
-                  <span className="flex items-center px-3 text-sm text-muted-foreground">
-                    Page {page + 1} of {totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={page >= totalPages - 1}
-                    onClick={() => setPage((p) => p + 1)}
-                  >
-                    Next
+                    Reset
                   </Button>
                 </div>
               </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+
+          {/* Table */}
+          <Card>
+            <CardContent className="p-0">
+              {isLoading ? (
+                <div className="p-8 text-center text-muted-foreground">
+                  Loading disco readiness records...
+                </div>
+              ) : items.length === 0 ? (
+                <div className="p-8 text-center text-muted-foreground">
+                  No records match your filters.{" "}
+                  <button
+                    className="text-primary underline"
+                    onClick={resetFilters}
+                  >
+                    Reset filters
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Site ID</TableHead>
+                        <TableHead>Feeder Data</TableHead>
+                        <TableHead>POI</TableHead>
+                        <TableHead>Bulk Meter</TableHead>
+                        <TableHead>Customer Data</TableHead>
+                        <TableHead>Settlement Terms</TableHead>
+                        <TableHead>Tripartite</TableHead>
+                        <TableHead>Overall Status</TableHead>
+                        <TableHead>Last Updated</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {items.map((r) => (
+                        <TableRow key={r.id}>
+                          <TableCell className="font-mono text-sm font-medium">
+                            {r.site_id}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              className={`text-xs ${
+                                STATUS_COLORS[r.feeder_data_status] ??
+                                "bg-gray-100 text-gray-700"
+                              }`}
+                            >
+                              {statusLabel(r.feeder_data_status)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              className={`text-xs ${
+                                STATUS_COLORS[r.poi_status] ??
+                                "bg-gray-100 text-gray-700"
+                              }`}
+                            >
+                              {statusLabel(r.poi_status)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              className={`text-xs ${
+                                STATUS_COLORS[r.bulk_meter_status] ??
+                                "bg-gray-100 text-gray-700"
+                              }`}
+                            >
+                              {statusLabel(r.bulk_meter_status)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              className={`text-xs ${
+                                STATUS_COLORS[r.customer_data_status] ??
+                                "bg-gray-100 text-gray-700"
+                              }`}
+                            >
+                              {statusLabel(r.customer_data_status)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              className={`text-xs ${
+                                STATUS_COLORS[r.settlement_terms_status] ??
+                                "bg-gray-100 text-gray-700"
+                              }`}
+                            >
+                              {statusLabel(r.settlement_terms_status)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              className={`text-xs ${
+                                STATUS_COLORS[r.tripartite_status] ??
+                                "bg-gray-100 text-gray-700"
+                              }`}
+                            >
+                              {statusLabel(r.tripartite_status)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              className={`text-xs ${
+                                STATUS_COLORS[r.overall_status] ??
+                                "bg-gray-100 text-gray-700"
+                              }`}
+                            >
+                              {statusLabel(r.overall_status)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {formatDate(r.updated_at)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+
+                  {/* Pagination */}
+                  <div className="flex items-center justify-between border-t px-4 py-3">
+                    <p className="text-sm text-muted-foreground">
+                      Showing {page * pageSize + 1}–
+                      {Math.min((page + 1) * pageSize, total)} of {total}{" "}
+                      records
+                    </p>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={page === 0}
+                        onClick={() => setPage((p) => Math.max(0, p - 1))}
+                      >
+                        Previous
+                      </Button>
+                      <span className="flex items-center px-3 text-sm text-muted-foreground">
+                        Page {page + 1} of {totalPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={page >= totalPages - 1}
+                        onClick={() => setPage((p) => p + 1)}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
