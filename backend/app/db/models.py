@@ -1205,3 +1205,207 @@ class MELTarget(Base):
     __table_args__ = (
         Index("ix_mel_targets_indicator", "indicator_key"),
     )
+
+
+# ── Module 6b: Two-Envelope Bid Submission & Staged Evaluation ─────
+
+
+class BidEnvelope(Base):
+    __tablename__ = "bid_envelopes"
+
+    id = Column(String, primary_key=True, default=new_uuid)
+    lot_id = Column(String, ForeignKey("lots.id"), nullable=False)
+    bid_id = Column(String, ForeignKey("bids.id"), nullable=True)
+    developer_id = Column(String, ForeignKey("users.id"), nullable=False)
+    envelope_type = Column(String(20), nullable=False)  # 'technical' or 'financial'
+    status = Column(String(20), default="draft")  # draft/submitted/locked/sealed/unsealed/returned
+    submitted_at = Column(DateTime, nullable=True)
+    submission_ip = Column(String(50), nullable=True)
+    encrypted = Column(Boolean, default=False)
+    encryption_key_hash = Column(String(100), nullable=True)
+    decryption_released_at = Column(DateTime, nullable=True)
+    data_completeness_pct = Column(Float, default=0.0)
+    form_data = Column(JSON, default=dict)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+
+    documents = relationship("EnvelopeDocument", back_populates="envelope", cascade="all, delete-orphan")
+
+    __table_args__ = (
+        Index("ix_bid_envelope_lot_dev", "lot_id", "developer_id"),
+    )
+
+
+class EnvelopeDocument(Base):
+    __tablename__ = "envelope_documents"
+
+    id = Column(String, primary_key=True, default=new_uuid)
+    envelope_id = Column(String, ForeignKey("bid_envelopes.id", ondelete="CASCADE"), nullable=False)
+    document_type = Column(String(60), nullable=False)
+    required = Column(Boolean, default=True)
+    filename = Column(String(300), nullable=True)
+    file_url = Column(String(500), nullable=True)
+    file_size_bytes = Column(Integer, default=0)
+    mime_type = Column(String(100), nullable=True)
+    checksum_sha256 = Column(String(100), nullable=True)
+    uploaded_at = Column(DateTime, nullable=True)
+    uploaded_by = Column(String, ForeignKey("users.id"), nullable=True)
+
+    envelope = relationship("BidEnvelope", back_populates="documents")
+
+
+class EvaluationStage(Base):
+    __tablename__ = "evaluation_stages"
+
+    id = Column(String, primary_key=True, default=new_uuid)
+    lot_id = Column(String, ForeignKey("lots.id"), nullable=False)
+    stage_number = Column(Integer, nullable=False)
+    stage_name = Column(String(100), nullable=False)
+    status = Column(String(20), default="pending")  # pending/active/consensus/locked/skipped
+    opened_at = Column(DateTime, nullable=True)
+    locked_at = Column(DateTime, nullable=True)
+    locked_by = Column(String, ForeignKey("users.id"), nullable=True)
+    lock_note = Column(Text, nullable=True)
+    min_threshold_pct = Column(Float, nullable=True)
+    technical_weight_pct = Column(Float, nullable=True)
+    financial_weight_pct = Column(Float, nullable=True)
+    created_at = Column(DateTime, default=utcnow)
+
+    __table_args__ = (
+        Index("ix_eval_stage_lot_num", "lot_id", "stage_number", unique=True),
+    )
+
+
+class EvaluationCriterion(Base):
+    __tablename__ = "evaluation_criteria"
+
+    id = Column(String, primary_key=True, default=new_uuid)
+    lot_id = Column(String, ForeignKey("lots.id"), nullable=False)
+    stage_number = Column(Integer, nullable=False)
+    criterion_code = Column(String(10), nullable=False)
+    criterion_name = Column(String(200), nullable=False)
+    description = Column(Text, nullable=True)
+    max_score = Column(Float, default=10.0)
+    weight_pct = Column(Float, nullable=False)
+    assigned_evaluator_id = Column(String, ForeignKey("users.id"), nullable=True)
+    assigned_evaluator_role = Column(String(50), nullable=True)
+    is_pass_fail = Column(Boolean, default=False)
+    pass_fail_requirement = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=utcnow)
+
+    __table_args__ = (
+        Index("ix_eval_crit_lot_stage_code", "lot_id", "stage_number", "criterion_code", unique=True),
+    )
+
+
+class EvaluationScore(Base):
+    __tablename__ = "evaluation_scores_v2"
+
+    id = Column(String, primary_key=True, default=new_uuid)
+    lot_id = Column(String, ForeignKey("lots.id"), nullable=False)
+    stage_number = Column(Integer, nullable=False)
+    criterion_id = Column(String, ForeignKey("evaluation_criteria.id"), nullable=False)
+    bid_id = Column(String, ForeignKey("bids.id"), nullable=False)
+    evaluator_id = Column(String, ForeignKey("users.id"), nullable=False)
+    individual_score = Column(Float, nullable=True)
+    individual_justification = Column(Text, default="")
+    individual_submitted_at = Column(DateTime, nullable=True)
+    consensus_required = Column(Boolean, default=False)
+    consensus_score = Column(Float, nullable=True)
+    consensus_justification = Column(Text, nullable=True)
+    consensus_submitted_at = Column(DateTime, nullable=True)
+    ai_flag = Column(Text, nullable=True)
+    ai_flag_acknowledged = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+
+    __table_args__ = (
+        Index("ix_eval_score_lot_stage", "lot_id", "stage_number"),
+        Index("ix_eval_score_bid", "bid_id"),
+        Index("ix_eval_score_evaluator", "evaluator_id"),
+    )
+
+
+class EvaluationBidResult(Base):
+    __tablename__ = "evaluation_bid_results"
+
+    id = Column(String, primary_key=True, default=new_uuid)
+    lot_id = Column(String, ForeignKey("lots.id"), nullable=False)
+    bid_id = Column(String, ForeignKey("bids.id"), nullable=False)
+    developer_id = Column(String, ForeignKey("users.id"), nullable=False)
+    stage_number = Column(Integer, nullable=False)
+    stage1_admin_pass = Column(Boolean, nullable=True)
+    stage1_fail_reasons = Column(JSON, nullable=True)
+    stage2_technical_score = Column(Float, nullable=True)
+    stage2_passed_threshold = Column(Boolean, nullable=True)
+    stage2_threshold_applied = Column(Float, nullable=True)
+    stage3_financial_score = Column(Float, nullable=True)
+    stage3_passed_threshold = Column(Boolean, nullable=True)
+    stage3_grant_ask_usd = Column(Float, nullable=True)
+    stage3_grant_ask_pct = Column(Float, nullable=True)
+    stage3_within_ceiling = Column(Boolean, nullable=True)
+    stage3_dscr = Column(Float, nullable=True)
+    stage3_tariff_residential_usd = Column(Float, nullable=True)
+    stage4_combined_score = Column(Float, nullable=True)
+    stage4_rank = Column(Integer, nullable=True)
+    stage4_recommended_for_award = Column(Boolean, default=False)
+    stage4_recommendation_note = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+
+    __table_args__ = (
+        Index("ix_eval_bid_result_lot_stage", "lot_id", "stage_number"),
+    )
+
+
+class EvaluationClarification(Base):
+    __tablename__ = "evaluation_clarifications"
+
+    id = Column(String, primary_key=True, default=new_uuid)
+    lot_id = Column(String, ForeignKey("lots.id"), nullable=False)
+    bid_id = Column(String, ForeignKey("bids.id"), nullable=False)
+    stage_number = Column(Integer, nullable=False)
+    criterion_id = Column(String, ForeignKey("evaluation_criteria.id"), nullable=True)
+    requested_by = Column(String, ForeignKey("users.id"), nullable=False)
+    request_text = Column(Text, nullable=False)
+    request_sent_at = Column(DateTime, default=utcnow)
+    developer_response = Column(Text, nullable=True)
+    developer_responded_at = Column(DateTime, nullable=True)
+    response_deadline = Column(DateTime, nullable=True)
+    round_number = Column(Integer, default=1)
+    is_private = Column(Boolean, default=True)
+    status = Column(String(20), default="pending")
+    created_at = Column(DateTime, default=utcnow)
+
+
+class BidOpeningRecord(Base):
+    __tablename__ = "bid_opening_records"
+
+    id = Column(String, primary_key=True, default=new_uuid)
+    lot_id = Column(String, ForeignKey("lots.id"), unique=True, nullable=False)
+    opened_at = Column(DateTime, default=utcnow)
+    opened_by = Column(String, ForeignKey("users.id"), nullable=True)
+    committee_members = Column(JSON, default=list)
+    bids_received_count = Column(Integer, default=0)
+    late_bids_count = Column(Integer, default=0)
+    bid_summary = Column(JSON, default=list)
+    created_at = Column(DateTime, default=utcnow)
+
+
+class StandstillNotification(Base):
+    __tablename__ = "standstill_notifications"
+
+    id = Column(String, primary_key=True, default=new_uuid)
+    lot_id = Column(String, ForeignKey("lots.id"), unique=True, nullable=False)
+    noia_issued_at = Column(DateTime, nullable=True)
+    noia_issued_by = Column(String, ForeignKey("users.id"), nullable=True)
+    standstill_end_date = Column(DateTime, nullable=True)
+    recommended_developer_id = Column(String, ForeignKey("users.id"), nullable=True)
+    recommended_grant_amount_usd = Column(Float, nullable=True)
+    complaint_window_open = Column(Boolean, default=True)
+    complaints_received = Column(Integer, default=0)
+    complaints_upheld = Column(Integer, default=0)
+    award_cleared_to_proceed = Column(Boolean, default=False)
+    cleared_at = Column(DateTime, nullable=True)
+    cleared_by = Column(String, ForeignKey("users.id"), nullable=True)
+    clearing_note = Column(Text, nullable=True)

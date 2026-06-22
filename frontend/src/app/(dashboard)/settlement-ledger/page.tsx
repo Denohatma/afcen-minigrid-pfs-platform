@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { SettlementInvoice, SettlementDashboard, SettlementHistoryItem } from "@/lib/types";
@@ -604,9 +604,8 @@ export default function SettlementLedgerPage() {
                 </TableHeader>
                 <TableBody>
                   {invoices.map(inv => (
-                    <>
+                    <Fragment key={inv.id}>
                       <TableRow
-                        key={inv.id}
                         className={`cursor-pointer hover:bg-accent/50 ${
                           inv.status === "overdue" ? "bg-red-50/50" :
                           inv.status === "disputed" ? "bg-purple-50/50" : ""
@@ -637,7 +636,7 @@ export default function SettlementLedgerPage() {
                           onClose={() => setExpandedId(null)}
                         />
                       )}
-                    </>
+                    </Fragment>
                   ))}
                 </TableBody>
               </Table>

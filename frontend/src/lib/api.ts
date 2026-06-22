@@ -15,6 +15,10 @@ import type {
   Evaluation,
   AIFlag,
   NoObjectionPack,
+  EvalStage,
+  EvalCriterion,
+  EvalBidResult,
+  BidEnvelope,
   GrantAgreement,
   ConditionPrecedent,
   EligibleCapex,
@@ -44,11 +48,30 @@ import type {
 
 const API_BASE = "/api/proxy";
 
+function getStoredRole(): string {
+  if (typeof window === "undefined") return "rea_pmu_officer";
+  try {
+    const key = localStorage.getItem("dares-role") || "pmu";
+    const map: Record<string, string> = {
+      pmu: "rea_pmu_officer",
+      disco_aedc: "disco_officer",
+      disco_kedco: "disco_officer",
+      disco_ie: "disco_officer",
+      bidder: "developer",
+      evaluator: "afcen_analyst",
+    };
+    return map[key] || "rea_pmu_officer";
+  } catch {
+    return "rea_pmu_officer";
+  }
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     ...init,
     headers: {
       "Content-Type": "application/json",
+      "X-User-Role": getStoredRole(),
       ...init?.headers,
     },
   });
@@ -111,6 +134,8 @@ export const api = {
   lots: {
     list: (params?: Record<string, string>) =>
       request<{ lots: Lot[] }>(`/lots${qs(params)}`),
+    siteAssignments: () =>
+      request<{ assignments: Array<{ site_id: string; settlement_rank: number; lot_id: string; lot_name: string; disco: string }> }>("/lots/site-assignments"),
     get: (id: string) => request<Lot>(`/lots/${id}`),
     create: (data: Partial<Lot>) =>
       request<Lot>("/lots", { method: "POST", body: JSON.stringify(data) }),
@@ -118,6 +143,9 @@ export const api = {
       request<Lot>(`/lots/${id}`, { method: "PUT", body: JSON.stringify(data) }),
     addSites: (id: string, siteIds: string[]) =>
       request<{ added: number }>(`/lots/${id}/sites`, { method: "POST", body: JSON.stringify({ site_ids: siteIds }) }),
+    addSitesByRank: (id: string, ranks: number[]) =>
+      request<{ lot_id: string; added_ranks: number[]; site_count: number; total_connections: number }>(
+        `/lots/${id}/sites-by-rank`, { method: "POST", body: JSON.stringify({ settlement_ranks: ranks }) }),
     removeSite: (lotId: string, siteId: string) =>
       request<void>(`/lots/${lotId}/sites/${siteId}`, { method: "DELETE" }),
     approve: (id: string) =>
@@ -192,6 +220,61 @@ export const api = {
       request<{ ok: boolean }>(`/ai-flags/${flagId}/action`, { method: "PUT", body: JSON.stringify(data) }),
     aiFlags: (evalId: string) =>
       request<{ flags: AIFlag[] }>(`/evaluations/${evalId}/ai-flags`),
+  },
+
+  // ── Module 6b: Staged Evaluation ────────────────────────────────
+  evalStages: {
+    setup: (lotId: string, data: {
+      stage2_threshold?: number;
+      stage3_threshold?: number;
+      stage4_technical_weight?: number;
+      stage4_financial_weight?: number;
+      criteria: Array<{ stage: number; code: string; name: string; weight: number; max_score?: number; evaluator_role?: string; is_pass_fail?: boolean }>;
+    }) =>
+      request<{ lot_id: string; stages: EvalStage[]; criteria: EvalCriterion[] }>(
+        `/eval/lots/${lotId}/stages/setup`, { method: "POST", body: JSON.stringify(data) }),
+    list: (lotId: string) =>
+      request<{ lot_id: string; stages: EvalStage[]; total: number }>(
+        `/eval/lots/${lotId}/stages`),
+    runStage1: (lotId: string) =>
+      request<{ lot_id: string; stage: number; status: string; results: EvalBidResult[] }>(
+        `/eval/lots/${lotId}/stages/1/run`, { method: "POST" }),
+    score: (lotId: string, stageNum: number, data: { criterion_id: string; bid_id: string; score: number; justification: string }) =>
+      request<Record<string, unknown>>(
+        `/eval/lots/${lotId}/stages/${stageNum}/score`, { method: "POST", body: JSON.stringify(data) }),
+    progress: (lotId: string, stageNum: number) =>
+      request<{ lot_id: string; stage_number: number; total_bids: number; criteria_progress: Array<{ criterion_id: string; criterion_code: string; criterion_name: string; total_bids: number; bids_scored: number; complete: boolean }> }>(
+        `/eval/lots/${lotId}/stages/${stageNum}/progress`),
+    lockStage2: (lotId: string) =>
+      request<{ lot_id: string; stage: number; status: string; threshold: number; results: EvalBidResult[] }>(
+        `/eval/lots/${lotId}/stages/2/lock`, { method: "POST" }),
+    lockStage3: (lotId: string) =>
+      request<{ lot_id: string; stage: number; status: string; threshold: number; results: EvalBidResult[] }>(
+        `/eval/lots/${lotId}/stages/3/lock`, { method: "POST" }),
+    calculateStage4: (lotId: string) =>
+      request<{ lot_id: string; stage: number; ranking: Array<{ rank: number; bid_id: string; developer_id: string; technical_score: number; financial_score: number; combined_score: number }> }>(
+        `/eval/lots/${lotId}/stages/4/calculate`, { method: "POST" }),
+    recommend: (lotId: string, data: { bid_id: string; note?: string }) =>
+      request<EvalBidResult>(
+        `/eval/lots/${lotId}/stages/4/recommend`, { method: "POST", body: JSON.stringify(data) }),
+    results: (lotId: string) =>
+      request<{ lot_id: string; total_bids: number; results: Array<{ bid_id: string; developer_id: string; stages: Record<string, EvalBidResult> }> }>(
+        `/eval/lots/${lotId}/results`),
+    bidOpening: (lotId: string, data: { committee_members: string[] }) =>
+      request<Record<string, unknown>>(
+        `/eval/lots/${lotId}/bid-opening`, { method: "POST", body: JSON.stringify(data) }),
+    envelopes: (lotId: string) =>
+      request<{ lot_id: string; envelopes: BidEnvelope[]; total: number }>(
+        `/eval/lots/${lotId}/envelopes`),
+    createEnvelope: (lotId: string, data: { envelope_type: string; bid_id?: string; form_data?: Record<string, unknown> }) =>
+      request<BidEnvelope>(
+        `/eval/lots/${lotId}/envelopes`, { method: "POST", body: JSON.stringify(data) }),
+    submitEnvelope: (lotId: string, envelopeId: string) =>
+      request<BidEnvelope>(
+        `/eval/lots/${lotId}/envelopes/${envelopeId}/submit`, { method: "PUT" }),
+    saveEnvelope: (lotId: string, envelopeId: string, data: { form_data: Record<string, unknown> }) =>
+      request<BidEnvelope>(
+        `/eval/lots/${lotId}/envelopes/${envelopeId}/save`, { method: "PUT", body: JSON.stringify(data) }),
   },
 
   noObjection: {

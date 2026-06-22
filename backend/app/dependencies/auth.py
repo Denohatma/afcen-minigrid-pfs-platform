@@ -32,7 +32,7 @@ MODULE_ACCESS = {
     "site_readiness":    {"full": {"rea_pmu_officer", "afcen_admin", "afcen_analyst"}, "read": {"disco_officer", "developer", "wb_observer"}},
     "disco_readiness":   {"full": {"disco_officer", "afcen_admin"}, "read": {"rea_pmu_officer", "afcen_analyst", "developer", "nerc_officer"}},
     "financial_model":   {"full": {"afcen_admin", "afcen_analyst"}, "read": {"rea_pmu_officer", "developer", "wb_observer"}},
-    "tender":            {"full": {"rea_pmu_officer", "afcen_admin"}, "read": {"afcen_analyst", "developer", "wb_observer", "nerc_officer"}},
+    "tender":            {"full": {"rea_pmu_officer", "afcen_admin"}, "read": {"afcen_analyst", "developer", "disco_officer", "wb_observer", "nerc_officer"}},
     "evaluation":        {"full": {"afcen_admin", "afcen_analyst"}, "read": {"rea_pmu_officer", "wb_observer"}},
     "agreements":        {"full": {"rea_pmu_officer", "rea_grant_admin", "afcen_admin"}, "read": {"developer", "wb_observer", "lender"}},
     "cp_tracker":        {"full": {"rea_pmu_officer", "afcen_admin"}, "read": {"developer", "wb_observer", "lender"}},

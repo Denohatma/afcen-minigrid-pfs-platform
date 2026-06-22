@@ -307,7 +307,7 @@ export default function DisbursementsPage() {
 
                       {row.milestones.map((ms, idx) => (
                         <TableCell
-                          key={idx}
+                          key={ms.id ?? `ms-${idx}`}
                           className={`py-1 text-center ${idx === 0 ? "border-l border-border" : ""}`}
                         >
                           <div className="flex flex-col items-center gap-0.5">

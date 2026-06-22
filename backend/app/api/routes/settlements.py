@@ -31,6 +31,8 @@ async def list_settlements(
     min_pop: int = Query(0, ge=0),
     max_grid_dist: Optional[float] = Query(None),
     search: Optional[str] = Query(None, description="Search village name"),
+    min_score: Optional[float] = Query(None, description="Minimum composite score"),
+    max_score: Optional[float] = Query(None, description="Maximum composite score (exclusive)"),
     limit: int = Query(50, ge=1, le=25000),
     offset: int = Query(0, ge=0),
 ):
@@ -49,6 +51,10 @@ async def list_settlements(
         results = [s for s in results if s["population"] >= min_pop]
     if max_grid_dist is not None:
         results = [s for s in results if s["grid_dist_km"] <= max_grid_dist]
+    if min_score is not None:
+        results = [s for s in results if s["score"] >= min_score]
+    if max_score is not None:
+        results = [s for s in results if s["score"] < max_score]
     if search:
         q = search.lower()
         results = [s for s in results if q in s["village"].lower() or q in s["lga"].lower()]

@@ -276,6 +276,81 @@ export interface NoObjectionPack {
   created_at: string;
 }
 
+// ── Module 6b: Staged Evaluation ───────────────────────────────────
+
+export interface EvalStage {
+  id: string;
+  lot_id: string;
+  stage_number: number;
+  stage_name: string;
+  status: string;
+  opened_at: string | null;
+  locked_at: string | null;
+  locked_by: string | null;
+  lock_note: string | null;
+  min_threshold_pct: number | null;
+  technical_weight_pct: number | null;
+  financial_weight_pct: number | null;
+  created_at: string | null;
+  criteria?: EvalCriterion[];
+}
+
+export interface EvalCriterion {
+  id: string;
+  lot_id: string;
+  stage_number: number;
+  criterion_code: string;
+  criterion_name: string;
+  description: string | null;
+  max_score: number;
+  weight_pct: number;
+  assigned_evaluator_id: string | null;
+  assigned_evaluator_role: string | null;
+  is_pass_fail: boolean;
+  pass_fail_requirement: string | null;
+}
+
+export interface EvalBidResult {
+  id: string;
+  lot_id: string;
+  bid_id: string;
+  developer_id: string;
+  stage_number: number;
+  stage1_admin_pass: boolean | null;
+  stage1_fail_reasons: string[] | null;
+  stage2_technical_score: number | null;
+  stage2_passed_threshold: boolean | null;
+  stage2_threshold_applied: number | null;
+  stage3_financial_score: number | null;
+  stage3_passed_threshold: boolean | null;
+  stage3_grant_ask_usd: number | null;
+  stage3_grant_ask_pct: number | null;
+  stage3_within_ceiling: boolean | null;
+  stage3_dscr: number | null;
+  stage3_tariff_residential_usd: number | null;
+  stage4_combined_score: number | null;
+  stage4_rank: number | null;
+  stage4_recommended_for_award: boolean;
+  stage4_recommendation_note: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface BidEnvelope {
+  id: string;
+  lot_id: string;
+  bid_id: string | null;
+  developer_id: string;
+  envelope_type: string;
+  status: string;
+  submitted_at: string | null;
+  encrypted: boolean;
+  data_completeness_pct: number;
+  form_data: Record<string, unknown>;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
 // ── Module 7: Grant Agreements ──────────────────────────────────────
 
 export interface GrantAgreement {

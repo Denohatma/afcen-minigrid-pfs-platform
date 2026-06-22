@@ -63,10 +63,16 @@ class LotUpdate(BaseModel):
     evaluation_method: Optional[str] = None
     site_count: Optional[int] = None
     total_connections: Optional[int] = None
+    disco_status: Optional[str] = None
+    disco_notes: Optional[str] = None
 
 
 class SiteIds(BaseModel):
     site_ids: List[str]
+
+
+class SettlementRanks(BaseModel):
+    settlement_ranks: List[int]
 
 
 class DataRoomDocCreate(BaseModel):
@@ -315,6 +321,31 @@ def _bid_dict(b: Bid) -> dict:
 # =====================================================================
 
 
+@router.get("/lots/site-assignments")
+async def lot_site_assignments(
+    auth: AuthContext = Depends(require_module("tender")),
+    db: AsyncSession = Depends(get_db),
+):
+    """Return all lot-site assignments with lot metadata for the sizing page."""
+    q = (
+        select(LotSite, Lot)
+        .join(Lot, LotSite.lot_id == Lot.id)
+        .order_by(LotSite.settlement_rank)
+    )
+    result = await db.execute(q)
+    rows = result.all()
+    assignments = []
+    for ls, lot in rows:
+        assignments.append({
+            "site_id": ls.site_id,
+            "settlement_rank": ls.settlement_rank,
+            "lot_id": lot.id,
+            "lot_name": lot.lot_name,
+            "disco": lot.disco,
+        })
+    return {"assignments": assignments, "total": len(assignments)}
+
+
 @router.get("/lots")
 async def list_lots(
     disco: Optional[str] = None,
@@ -469,6 +500,92 @@ async def add_sites_to_lot(
     return {"lot_id": lot_id, "added": added, "site_count": lot.site_count}
 
 
+@router.post("/lots/{lot_id}/sites-by-rank", status_code=201)
+async def add_sites_by_rank(
+    lot_id: str,
+    body: SettlementRanks,
+    auth: AuthContext = Depends(require_module_write("tender")),
+    db: AsyncSession = Depends(get_db),
+):
+    """Add sites to a lot by settlement rank. Auto-creates SiteRegistry entries from JSON data."""
+    import json as _json
+    from pathlib import Path
+
+    result = await db.execute(select(Lot).where(Lot.id == lot_id))
+    lot = result.scalar_one_or_none()
+    if not lot:
+        raise HTTPException(404, "Lot not found")
+
+    json_path = Path("/app/src/data/ranked_settlements.json")
+    if not json_path.exists():
+        json_path = Path(__file__).resolve().parent.parent.parent.parent.parent / "src" / "data" / "ranked_settlements.json"
+    with open(json_path) as f:
+        all_settlements = {s["rank"]: s for s in _json.load(f)}
+
+    existing_result = await db.execute(
+        select(LotSite.settlement_rank).where(LotSite.lot_id == lot_id)
+    )
+    existing_ranks = {r[0] for r in existing_result.all()}
+
+    added_ranks = []
+    for rank in body.settlement_ranks:
+        if rank in existing_ranks:
+            continue
+        sdata = all_settlements.get(rank)
+        if not sdata:
+            continue
+
+        sr_result = await db.execute(
+            select(SiteRegistry).where(SiteRegistry.settlement_rank == rank)
+        )
+        site_reg = sr_result.scalar_one_or_none()
+        if not site_reg:
+            site_reg = SiteRegistry(
+                disco=sdata.get("disco", ""),
+                community=sdata.get("village", ""),
+                state=sdata.get("state", ""),
+                lga=sdata.get("lga", ""),
+                latitude=sdata.get("latitude"),
+                longitude=sdata.get("longitude"),
+                population=sdata.get("population", 0),
+                customers=sdata.get("connections", 0),
+                demand_kwh=sdata.get("demand_kwh", 0),
+                grid_dist_km=sdata.get("grid_dist_km", 0),
+                settlement_rank=rank,
+                status="lot_assigned",
+            )
+            db.add(site_reg)
+            await db.flush()
+
+        ls = LotSite(lot_id=lot_id, site_id=site_reg.id, settlement_rank=rank)
+        db.add(ls)
+        added_ranks.append(rank)
+
+    await db.flush()
+
+    count_result = await db.execute(
+        select(func.count()).select_from(LotSite).where(LotSite.lot_id == lot_id)
+    )
+    lot.site_count = count_result.scalar() or 0
+
+    conn_result = await db.execute(
+        select(func.coalesce(func.sum(SiteRegistry.customers), 0)).where(
+            SiteRegistry.id.in_(
+                select(LotSite.site_id).where(LotSite.lot_id == lot_id)
+            )
+        )
+    )
+    lot.total_connections = conn_result.scalar() or 0
+
+    await db.commit()
+    return {
+        "lot_id": lot_id,
+        "added_ranks": added_ranks,
+        "site_count": lot.site_count,
+        "total_connections": lot.total_connections,
+    }
+
+
 @router.delete("/lots/{lot_id}/sites/{site_id}", status_code=204)
 async def remove_site_from_lot(
     lot_id: str,
@@ -587,7 +704,7 @@ class DiscoNotesBody(BaseModel):
 async def update_disco_notes(
     lot_id: str,
     body: DiscoNotesBody,
-    auth: AuthContext = Depends(require_module_write("tender")),
+    auth: AuthContext = Depends(require_module_write("disco_readiness")),
     db: AsyncSession = Depends(get_db),
 ):
     """Update DisCo notes and data pack status for a lot."""

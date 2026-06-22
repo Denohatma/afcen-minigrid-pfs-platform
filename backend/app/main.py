@@ -22,6 +22,7 @@ from app.api.routes import (
     disco_readiness,
     lots,
     evaluations,
+    eval_stages,
     agreements,
     disbursements,
     grievances,
@@ -619,6 +620,7 @@ app.include_router(site_registry.router, prefix="/api/v1", tags=["site-registry"
 app.include_router(disco_readiness.router, prefix="/api/v1", tags=["disco-readiness"])
 app.include_router(lots.router, prefix="/api/v1", tags=["lots-tenders"])
 app.include_router(evaluations.router, prefix="/api/v1", tags=["evaluations"])
+app.include_router(eval_stages.router, prefix="/api/v1", tags=["eval-stages"])
 app.include_router(agreements.router, prefix="/api/v1", tags=["agreements"])
 app.include_router(disbursements.router, prefix="/api/v1", tags=["disbursements"])
 app.include_router(grievances.router, prefix="/api/v1", tags=["grievances"])

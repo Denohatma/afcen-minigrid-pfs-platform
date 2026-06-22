@@ -17,6 +17,9 @@ async function proxyRequest(
     "Content-Type": "application/json",
   };
 
+  const userRole = request.headers.get("X-User-Role");
+  if (userRole) headers["X-User-Role"] = userRole;
+
   const init: RequestInit = {
     method: request.method,
     headers,
